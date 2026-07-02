@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#eaf2fb" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="manifest" href="manifest.webmanifest" />
+<title>Väderråd – väder & klädval</title>
+<style>
+:root{
+  --bg1:#f3f8fe; --bg2:#e7f0fb; --bg3:#fbfdff;
+  --ink:#132132; --ink2:#5a6b80; --ink3:#8a99ab;
+  --line:rgba(19,33,50,.08);
+  --card:rgba(255,255,255,.72);
+  --card2:rgba(255,255,255,.55);
+  --glass:rgba(255,255,255,.62);
+  --warm:#ff9a3d; --warm-ink:#a1521a;
+  --cool:#3e8ef0; --cool-ink:#1e5fb0;
+  --rain:#4aa8e0; --uv:#ff8a5c; --hum:#48b0c7; --cloud:#7e8da0;
+  --good:#37b26b; --bad:#e05656; --warn:#e8a13a;
+  --r:22px; --shadow:0 10px 34px rgba(30,60,110,.12);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%; margin:0; overflow:hidden; overscroll-behavior:none;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(120% 80% at 80% -10%, rgba(255,180,90,.18), transparent 55%),
+    radial-gradient(120% 90% at 0% 110%, rgba(80,150,235,.20), transparent 55%),
+    linear-gradient(160deg, var(--bg1), var(--bg2) 60%, var(--bg3));
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  user-select:none;
+}
+#app{position:fixed; inset:0; display:flex; flex-direction:column;}
+button{font-family:inherit; border:0; background:none; color:inherit; cursor:pointer;}
+
+/* Top bar */
+.top{
+  padding:calc(var(--safe-t) + 12px) 18px 6px; display:flex; align-items:center; gap:10px;
+  flex:0 0 auto;
+}
+.loc{display:flex; align-items:center; gap:8px; min-width:0;}
+.loc .pin{font-size:16px}
+.loc .name{font-weight:700; font-size:17px; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.loc .sub{font-size:11px; color:var(--ink3); font-weight:600;}
+.top .spacer{flex:1}
+.iconbtn{
+  width:38px; height:38px; border-radius:50%; display:grid; place-items:center;
+  background:var(--card); box-shadow:var(--shadow); font-size:16px; backdrop-filter:blur(12px);
+}
+.iconbtn:active{transform:scale(.94)}
+
+/* View area */
+.views{position:relative; flex:1 1 auto; min-height:0;}
+.view{position:absolute; inset:0; padding:6px 18px 96px; display:none; flex-direction:column; overflow:hidden;}
+.view.active{display:flex;}
+
+/* NOW */
+.now-hero{display:flex; align-items:flex-start; gap:14px; padding-top:6px;}
+.now-temp{font-size:clamp(58px,20vw,86px); font-weight:800; line-height:.9; letter-spacing:-2px; font-variant-numeric:tabular-nums;}
+.now-temp sup{font-size:.34em; font-weight:700; top:-1.1em; color:var(--ink2)}
+.now-ico{font-size:clamp(46px,15vw,70px); line-height:1;}
+.now-meta{margin-left:auto; text-align:right; padding-top:6px}
+.now-desc{font-weight:700; font-size:15px}
+.now-feels{font-size:13px; color:var(--ink2); font-weight:600; margin-top:2px}
+.now-range{font-size:13px; color:var(--ink3); font-weight:600; margin-top:2px}
+.consensus{margin-top:2px; font-size:11px; color:var(--ink3); font-weight:600}
+
+.metrics{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:10px;}
+.metric{background:var(--card); border-radius:15px; padding:9px 6px 8px; box-shadow:var(--shadow); backdrop-filter:blur(12px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; text-align:center}
+.metric .mi{font-size:16px; line-height:1.1}
+.metric .mv{font-weight:800; font-size:15px; font-variant-numeric:tabular-nums; line-height:1.15}
+.metric .ml{font-size:9px; color:var(--ink2); font-weight:700; text-transform:uppercase; letter-spacing:.4px}
+.metric .src{font-size:8px; color:var(--ink3); margin-top:2px; font-weight:700}
+
+.now-cloth{margin-top:14px; background:var(--card); border-radius:var(--r); padding:14px 16px; box-shadow:var(--shadow); backdrop-filter:blur(12px); flex:1 1 auto; min-height:0; display:flex; flex-direction:column;}
+.cloth-head{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+.cloth-head b{font-size:14px}
+.aud-toggle{margin-left:auto; display:flex; background:rgba(19,33,50,.06); border-radius:999px; padding:3px;}
+.aud-toggle button{font-size:12px; font-weight:700; padding:5px 11px; border-radius:999px; color:var(--ink2)}
+.aud-toggle button.on{background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.chips{display:flex; flex-wrap:wrap; gap:7px;}
+.chip{display:inline-flex; align-items:center; gap:6px; background:rgba(62,142,240,.10); color:var(--cool-ink); font-weight:700; font-size:13px; padding:7px 11px; border-radius:12px;}
+.chip.warm{background:rgba(255,154,61,.14); color:var(--warm-ink)}
+.chip.acc{background:rgba(55,178,107,.14); color:#1c7a45}
+.cloth-note{margin-top:10px; font-size:12.5px; color:var(--ink2); line-height:1.45; overflow:auto}
+
+/* HOURLY */
+.vhead{display:flex; align-items:center; gap:8px; padding:4px 0 6px}
+.vhead h2{font-size:15px; font-weight:800; margin:0}
+.vhead .hint{font-size:11px; color:var(--ink3); font-weight:600; margin-left:auto}
+.hstrip{display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; padding:4px 2px 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+.hstrip::-webkit-scrollbar{display:none}
+.hcard{flex:0 0 auto; width:78px; background:var(--card); border-radius:18px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); backdrop-filter:blur(10px); display:flex; flex-direction:column; align-items:center; gap:4px}
+.hcard .ht{font-size:12px; font-weight:700; color:var(--ink2)}
+.hcard .hi{font-size:26px; line-height:1}
+.hcard .htemp{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums}
+.hcard .hfeel{font-size:10px; color:var(--ink3); font-weight:600}
+.hcard .hrow{display:flex; gap:6px; font-size:10px; color:var(--ink2); font-weight:700; margin-top:2px}
+.hcard .hcloth{font-size:20px; margin-top:4px; line-height:1}
+.hcard .hclabel{font-size:9.5px; color:var(--ink2); font-weight:700; line-height:1.15; min-height:22px}
+.hourly-scrollwrap{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--ink2); font-weight:600; padding-top:6px}
+.legend span{display:inline-flex; align-items:center; gap:4px}
+
+/* 7 DAY */
+.days{display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0; justify-content:center}
+.drow{display:grid; grid-template-columns:52px 34px 1fr auto; align-items:center; gap:10px; background:var(--card); border-radius:16px; padding:11px 14px; box-shadow:var(--shadow); backdrop-filter:blur(10px)}
+.drow .dn{font-weight:800; font-size:14px}
+.drow .dn small{display:block; font-weight:600; font-size:10px; color:var(--ink3)}
+.drow .di{font-size:24px; text-align:center}
+.drow .dbar{display:flex; align-items:center; gap:8px}
+.trackwrap{flex:1; height:7px; border-radius:6px; background:linear-gradient(90deg,#8ec5ff,#ffd08a,#ff9a6a); position:relative; opacity:.5}
+.dtemps{display:flex; gap:8px; font-variant-numeric:tabular-nums}
+.dtemps .lo{color:var(--ink3); font-weight:700; font-size:14px}
+.dtemps .hi{color:var(--ink); font-weight:800; font-size:14px}
+.drow .dmeta{display:flex; gap:9px; font-size:11px; color:var(--ink2); font-weight:700; justify-self:end}
+
+/* AI */
+.ai-scope{display:flex; gap:8px; margin:2px 0 10px}
+.seg{flex:1; display:flex; background:rgba(19,33,50,.06); border-radius:12px; padding:3px}
+.seg button{flex:1; font-size:12.5px; font-weight:700; padding:8px 4px; border-radius:9px; color:var(--ink2)}
+.seg button.on{background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ai-card{background:var(--card); border-radius:var(--r); padding:13px 15px; box-shadow:var(--shadow); backdrop-filter:blur(12px); flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
+.ai-top{display:flex; align-items:center; gap:11px; margin-bottom:9px}
+.ai-emoji{font-size:34px}
+.ai-head b{font-size:16px; display:block}
+.ai-head span{font-size:12px; color:var(--ink2); font-weight:600}
+.ai-body{overflow:auto; min-height:0; flex:1}
+.ai-sec{margin-bottom:12px}
+.ai-sec h4{margin:0 0 7px; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink3)}
+.layer{display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line)}
+.layer:last-child{border-bottom:0}
+.layer .le{font-size:20px; width:26px; text-align:center}
+.layer .lt b{font-size:13.5px}
+.layer .lt span{font-size:11.5px; color:var(--ink2); display:block}
+.ai-reason{font-size:13px; line-height:1.5; color:var(--ink2); background:rgba(62,142,240,.07); border-radius:12px; padding:11px 13px}
+
+/* STATUS */
+.status-list{display:flex; flex-direction:column; gap:12px; margin-top:4px}
+.prov{background:var(--card); border-radius:var(--r); padding:14px 16px; box-shadow:var(--shadow); backdrop-filter:blur(12px)}
+.prov-head{display:flex; align-items:center; gap:10px}
+.dot{width:11px; height:11px; border-radius:50%; background:var(--ink3); flex:0 0 auto; box-shadow:0 0 0 4px rgba(0,0,0,.04)}
+.dot.up{background:var(--good); box-shadow:0 0 0 4px rgba(55,178,107,.18)}
+.dot.down{background:var(--bad); box-shadow:0 0 0 4px rgba(224,86,86,.18)}
+.dot.wait{background:var(--warn); animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.prov-head b{font-size:15px}
+.prov-head .st{margin-left:auto; font-size:12px; font-weight:800}
+.prov-head .st.up{color:var(--good)} .prov-head .st.down{color:var(--bad)} .prov-head .st.wait{color:var(--warn)}
+.prov-sub{font-size:12px; color:var(--ink2); margin:8px 0 2px; font-weight:600}
+.params{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.ptag{font-size:11px; font-weight:700; padding:4px 9px; border-radius:8px; background:rgba(55,178,107,.13); color:#1c7a45}
+.ptag.miss{background:rgba(224,86,86,.12); color:#a63333}
+.status-note{margin-top:14px; font-size:12.5px; color:var(--ink2); line-height:1.5; background:var(--card2); border-radius:14px; padding:12px 14px; backdrop-filter:blur(8px)}
+.status-note b{color:var(--ink)}
+
+/* Bottom nav */
+.nav{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:calc(var(--safe-b) + 12px); width:min(430px, calc(100% - 24px));
+  display:flex; justify-content:space-around; align-items:center;
+  background:var(--glass); backdrop-filter:blur(22px) saturate(180%); -webkit-backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid rgba(255,255,255,.6); border-radius:26px; padding:9px 6px;
+  box-shadow:0 14px 40px rgba(30,60,110,.20);
+}
+.nav button{display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 10px; border-radius:16px; color:var(--ink3); flex:1; transition:color .15s}
+.nav button .ni{font-size:20px; line-height:1}
+.nav button .nl{font-size:10px; font-weight:700}
+.nav button.on{color:var(--cool-ink)}
+.nav button.on .ni{transform:translateY(-1px)}
+.nav button:active{transform:scale(.92)}
+
+/* Sheet */
+.scrim{position:fixed; inset:0; background:rgba(15,30,55,.34); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .22s; z-index:40}
+.scrim.show{opacity:1; pointer-events:auto}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  background:linear-gradient(180deg,#fff,#f6faff); border-radius:26px 26px 0 0;
+  padding:14px 18px calc(var(--safe-b) + 20px); box-shadow:0 -12px 40px rgba(20,40,80,.2);
+  transform:translateY(110%); transition:transform .28s cubic-bezier(.2,.8,.2,1); max-height:82vh; overflow:auto;
+}
+.sheet.show{transform:translateY(0)}
+.grab{width:40px; height:5px; background:var(--line); border-radius:3px; margin:2px auto 12px}
+.sheet h3{margin:0 0 12px; font-size:17px}
+.gps-btn{width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg,#4a97f2,#3e8ef0); color:#fff; font-weight:800; font-size:14px; padding:13px; border-radius:14px; box-shadow:0 8px 20px rgba(62,142,240,.35)}
+.gps-btn:active{transform:scale(.98)}
+.searchrow{display:flex; gap:8px; margin:12px 0}
+.searchrow input{flex:1; border:1px solid var(--line); background:#fff; border-radius:12px; padding:12px 14px; font-size:15px; color:var(--ink); outline:none}
+.searchrow input:focus{border-color:var(--cool)}
+.results{display:flex; flex-direction:column; gap:6px; margin-top:4px}
+.res{display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; background:#fff; border:1px solid var(--line)}
+.res:active{background:#eef5ff}
+.res .rn{font-weight:700; font-size:14px}
+.res .rs{font-size:11px; color:var(--ink3); font-weight:600}
+.res .add{margin-left:auto; font-size:18px; color:var(--cool)}
+.fav-label{font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink3); font-weight:700; margin:16px 0 8px}
+.fav{display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; background:#fff; border:1px solid var(--line); margin-bottom:6px}
+.fav:active{background:#eef5ff}
+.fav .fn{font-weight:700; font-size:14px}
+.fav .del{margin-left:auto; font-size:16px; color:var(--bad); padding:4px 8px}
+.empty{font-size:13px; color:var(--ink3); padding:6px 2px}
+
+.toast{position:fixed; left:50%; bottom:calc(var(--safe-b) + 92px); transform:translateX(-50%) translateY(20px); background:rgba(19,33,50,.92); color:#fff; font-size:13px; font-weight:600; padding:10px 16px; border-radius:12px; z-index:60; opacity:0; transition:.25s; pointer-events:none}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+.loading{position:absolute; inset:0; display:grid; place-items:center; z-index:5; pointer-events:none; opacity:0; transition:.2s}
+.loading.show{opacity:1}
+.spin{width:34px; height:34px; border:3px solid rgba(62,142,240,.25); border-top-color:var(--cool); border-radius:50%; animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.err{margin:auto; text-align:center; color:var(--ink2); font-size:13px; padding:20px; line-height:1.5}
+.err b{display:block; color:var(--ink); font-size:15px; margin-bottom:6px}
+
+/* ===== 12h-KLOCKA ===== */
+.clock-toggle{display:flex; background:rgba(19,33,50,.06); border-radius:999px; padding:3px}
+.clock-toggle button{font-size:11px; font-weight:800; padding:5px 12px; border-radius:999px; color:var(--ink2)}
+.clock-toggle button.on{background:#fff; color:var(--cool-ink); box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.clock-wrap{flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; padding:6px 0}
+.clock{position:relative; width:min(86vw,44vh,360px); aspect-ratio:1; flex:0 0 auto}
+.clock-bg{position:absolute; inset:0; border-radius:50%; background:url('clock-bg.webp') center/cover no-repeat;
+  box-shadow:inset 0 0 0 6px rgba(255,255,255,.35), inset 0 0 0 1px rgba(255,255,255,.7), 0 14px 38px rgba(60,110,170,.22); z-index:0}
+.clock-bg::after{content:""; position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 50% 46%, rgba(255,255,255,.5), rgba(255,255,255,.05) 52%, transparent 70%)}
+.clock-dial{position:absolute; inset:0; z-index:1}
+.clock svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+.clock .center{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:47%; text-align:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.62)); border:1px solid rgba(255,255,255,.85); border-radius:50%; aspect-ratio:1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(30,60,110,.16); cursor:pointer; backdrop-filter:blur(3px)}
+.clock .center:active{transform:translate(-50%,-50%) scale(.96)}
+.clock .center .ctime{font-size:9px; font-weight:800; color:var(--cool-ink); letter-spacing:1px; margin-bottom:1px}
+.clock .center .ci{font-size:clamp(22px,7vw,30px); line-height:1}
+.clock .center .ct{font-size:clamp(28px,9vw,40px); font-weight:800; line-height:.9; font-variant-numeric:tabular-nums; letter-spacing:-1.5px; color:var(--ink)}
+.clock .center .cs{font-size:10.5px; color:var(--ink2); font-weight:800; margin-top:2px; line-height:1.1}
+.clock .center .cr{font-size:9.5px; color:var(--ink3); font-weight:700; margin-top:4px; display:flex; gap:7px; justify-content:center; font-variant-numeric:tabular-nums}
+.clock .center .cmore{font-size:9px; color:#fff; font-weight:800; margin-top:5px; letter-spacing:.3px; background:var(--cool); padding:3px 9px; border-radius:999px; box-shadow:0 2px 8px rgba(62,142,240,.35)}
+.clock .mk{position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; width:40px; padding:3px 1px;
+  background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.65); border-radius:13px; box-shadow:0 2px 8px rgba(30,60,110,.10); backdrop-filter:blur(2px)}
+.clock .mk .me{font-size:14px; line-height:1}
+.clock .mk .mt{font-size:10.5px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1; margin-top:1px}
+.clock .mk .mc{font-size:11px; line-height:1; margin-top:1px}
+.clock .mk.sel{background:#fff; border-color:rgba(62,142,240,.5); box-shadow:0 4px 14px rgba(62,142,240,.35); transform:translate(-50%,-50%) scale(1.08)}
+.clock .mk.isnow{border-color:rgba(62,142,240,.75)}
+.clock .mk:active{transform:translate(-50%,-50%) scale(1.18)}
+.clock .lab{position:absolute; transform:translate(-50%,-50%); font-size:9px; font-weight:800; color:var(--ink3); letter-spacing:.2px; text-shadow:0 1px 2px rgba(255,255,255,.7)}
+.clock .lab.card{font-size:12.5px; font-weight:900; color:var(--ink2)}
+.clock-bottom{flex:0 0 auto; display:flex; align-items:center; gap:10px; padding-top:6px}
+.range-band{display:flex; gap:6px; flex-wrap:wrap; flex:1; min-width:0}
+.range-pill{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:800; padding:6px 10px; border-radius:999px; box-shadow:var(--shadow); white-space:nowrap}
+.range-pill.warm{background:rgba(255,154,61,.15); color:var(--warm-ink)}
+.range-pill.cold{background:rgba(62,142,240,.13); color:var(--cool-ink)}
+.story-btn{flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800; color:var(--cool-ink);
+  background:var(--glass); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.6); padding:9px 14px; border-radius:999px; box-shadow:0 6px 18px rgba(30,60,110,.14)}
+.story-btn:active{transform:scale(.96)}
+.narrative-pop{font-size:14px; line-height:1.6; color:var(--ink)}
+.narrative-pop b{color:var(--cool-ink)}
+
+/* ===== DETALJ-POPUP (tim/dag) ===== */
+.pop-scrim{position:fixed; inset:0; background:rgba(15,30,55,.4); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:.2s; z-index:70}
+.pop-scrim.show{opacity:1; pointer-events:auto}
+.popcard{position:fixed; left:50%; top:50%; transform:translate(-50%,-46%) scale(.96); width:min(90vw,380px); max-height:86vh; overflow:auto;
+  background:linear-gradient(180deg,#fff,#f6faff); border-radius:24px; padding:18px 18px 20px; box-shadow:0 24px 60px rgba(20,40,80,.3); z-index:80; opacity:0; pointer-events:none; transition:.24s cubic-bezier(.2,.8,.2,1)}
+.popcard.show{opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1)}
+.pop-head{display:flex; align-items:center; gap:10px; margin-bottom:12px}
+.pop-head .pt{font-size:17px; font-weight:800}
+.pop-head .pt small{display:block; font-size:11px; color:var(--ink3); font-weight:600}
+.pop-close{margin-left:auto; width:32px; height:32px; border-radius:50%; background:rgba(19,33,50,.06); font-size:16px; color:var(--ink2)}
+.pop-hero{display:flex; align-items:center; gap:14px; margin-bottom:14px}
+.pop-hero .pe{font-size:46px}
+.pop-hero .ptemp{font-size:40px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
+.pop-hero .pd{font-size:13px; color:var(--ink2); font-weight:700}
+.pop-hero .pf{font-size:12px; color:var(--ink3); font-weight:600}
+.pop-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px}
+.pop-grid .pg{background:rgba(62,142,240,.07); border-radius:12px; padding:9px 6px; text-align:center}
+.pop-grid .pg .pv{font-weight:800; font-size:15px; font-variant-numeric:tabular-nums}
+.pop-grid .pg .pl{font-size:10px; color:var(--ink2); font-weight:700; margin-top:2px}
+.pop-cloth h5{margin:0 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink3)}
+.pop-cloth .band{display:flex; align-items:center; gap:8px; font-weight:800; font-size:14px; margin-bottom:8px}
+.pop-cloth .pchips{display:flex; flex-wrap:wrap; gap:6px}
+.pop-cloth .pchip{background:rgba(255,154,61,.13); color:var(--warm-ink); font-weight:700; font-size:12px; padding:6px 9px; border-radius:10px}
+.pop-cloth .preason{margin-top:10px; font-size:12px; color:var(--ink2); line-height:1.45}
+.pc-head{display:flex; align-items:center; gap:8px; margin-bottom:9px}
+.pc-head h5{margin:0}
+.pop-cloth .aud-toggle{margin-left:auto}
+.pop-cloth .aud-toggle button{font-size:11px; padding:5px 9px}
+.pop-cloth .layers-grid{margin-top:2px}
+.pop-cloth .ai-reason{margin-top:10px; background:rgba(62,142,240,.07); border-radius:12px}
+.pop-note{font-size:12.5px; line-height:1.5; color:var(--ink2); background:rgba(62,142,240,.07); border-radius:12px; padding:10px 12px; margin-bottom:12px}
+.clock .mk.isnow{outline:2px solid rgba(62,142,240,.55); outline-offset:1px; border-radius:12px}
+.ver{text-align:center; font-size:11px; color:var(--ink3); font-weight:700; margin-top:16px}
+
+/* ===== DYGNETS PERIODER (Idag) ===== */
+.sec-label{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink3); font-weight:800; margin:12px 2px 7px}
+.periods{display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0}
+.prow{display:grid; grid-template-columns:30px minmax(0,1fr) auto auto 30px; align-items:center; gap:10px;
+  background:var(--card); border-radius:17px; padding:0 14px; box-shadow:var(--shadow); backdrop-filter:blur(10px);
+  flex:1 1 0; min-height:0; text-align:left; width:100%}
+.prow:active{transform:scale(.985)}
+.prow .pi{font-size:23px; text-align:center}
+.prow .pn b{font-size:14px; display:block; line-height:1.15}
+.prow .pn small{font-size:10.5px; color:var(--ink3); font-weight:700}
+.prow .pn .pdsc{font-size:11.5px; color:var(--ink2); font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px}
+.prow .ppop{font-size:11px; font-weight:800; color:var(--cool-ink); background:rgba(62,142,240,.10); padding:5px 8px; border-radius:9px; font-variant-numeric:tabular-nums; white-space:nowrap}
+.prow .ptemps{text-align:right; line-height:1.05; font-variant-numeric:tabular-nums}
+.prow .ptemps b{font-size:17px; font-weight:800}
+.prow .ptemps small{display:block; font-size:11px; color:var(--ink3); font-weight:700}
+.prow .pcl{font-size:19px; text-align:center}
+
+/* ===== DAGENS PROGNOS (24h) ===== */
+.narrative{background:var(--card); border-radius:var(--r); padding:13px 16px; box-shadow:var(--shadow); backdrop-filter:blur(12px); flex:1 1 auto; min-height:0; overflow:auto; margin-top:4px}
+.narrative h4{margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink3)}
+.narrative p{margin:0; font-size:13.5px; line-height:1.55; color:var(--ink)}
+.narrative p b{color:var(--cool-ink)}
+
+/* ===== 7-DYGN (rikare) ===== */
+.days{display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0}
+.drow{display:grid; grid-template-columns:76px 34px 1fr auto; align-items:center; gap:10px; background:var(--card); border-radius:16px; padding:0 14px; box-shadow:var(--shadow); backdrop-filter:blur(10px); flex:1 1 0; min-height:0; text-align:left; width:100%}
+.drow:active{transform:scale(.99)}
+.drow .dn{font-weight:800; font-size:13.5px; line-height:1.1}
+.drow .dn small{display:block; font-weight:600; font-size:10px; color:var(--ink3); margin-top:1px}
+.drow .di{font-size:25px; text-align:center}
+.drow .dmid{min-width:0}
+.drow .dmid .ddesc{font-size:12.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block}
+.drow .dmid .dparams{display:flex; gap:10px; font-size:10.5px; color:var(--ink2); font-weight:700; margin-top:3px; font-variant-numeric:tabular-nums; flex-wrap:wrap}
+.drow .dtemps{display:flex; flex-direction:column; align-items:flex-end; justify-self:end; line-height:1.05}
+.drow .dtemps b{font-size:18px; font-weight:800; font-variant-numeric:tabular-nums}
+.drow .dtemps small{font-size:12px; color:var(--ink3); font-weight:700}
+
+/* ===== KLÄDVAL kompakt (utan scroll) ===== */
+.ai-body{overflow:hidden}
+.ai-sec{margin-bottom:10px}
+.layers-grid{display:grid; grid-template-columns:1fr 1fr; gap:5px 14px}
+.layer{display:flex; align-items:center; gap:9px; padding:4px 0; border-bottom:0}
+.layer .le{font-size:18px; width:22px; text-align:center}
+.layer .lt b{font-size:12.5px; line-height:1.15}
+.layer .lt span{font-size:10.5px; color:var(--ink2); display:block; line-height:1.1}
+.ai-reason{font-size:12px; line-height:1.45; padding:9px 11px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="loc" id="locBtn">
+      <span class="pin">📍</span>
+      <div style="min-width:0">
+        <div class="name" id="locName">Hämtar plats…</div>
+        <div class="sub" id="locSub">Tryck för att byta ort</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="gpsQuick" title="Min plats">🎯</button>
+    <button class="iconbtn" id="refreshBtn" title="Uppdatera">↻</button>
+  </div>
+
+  <div class="views">
+    <div class="loading" id="loading"><div class="spin"></div></div>
+
+    <!-- NU -->
+    <section class="view active" id="view-now">
+      <div class="now-hero">
+        <div class="now-ico" id="nowIco">⛅</div>
+        <div class="now-temp" id="nowTemp">–<sup>°</sup></div>
+        <div class="now-meta">
+          <div class="now-desc" id="nowDesc">–</div>
+          <div class="now-feels" id="nowFeels">Känns som –°</div>
+          <div class="now-range" id="nowRange">↑–° ↓–°</div>
+          <div class="consensus" id="nowConsensus"></div>
+        </div>
+      </div>
+      <div class="metrics" id="nowMetrics"></div>
+      <div class="sec-label">Dygnet framåt · tryck för detaljer & klädråd</div>
+      <div class="periods" id="periodList"></div>
+    </section>
+
+    <!-- 24H -->
+    <section class="view" id="view-hourly">
+      <div class="vhead"><h2>Timme för timme</h2>
+        <div class="clock-toggle" id="clockToggle" style="margin-left:auto">
+          <button data-o="0" class="on">0–12h</button>
+          <button data-o="12">12–24h</button>
+        </div>
+      </div>
+      <div class="clock-wrap">
+        <div class="clock" id="clock">
+          <div class="clock-bg"></div>
+          <div class="clock-dial" id="clockDial"></div>
+        </div>
+      </div>
+      <div class="clock-bottom">
+        <div class="range-band" id="rangeBand"></div>
+        <button class="story-btn" id="storyBtn">📖 Dagens prognos ›</button>
+      </div>
+    </section>
+
+    <!-- 7 DAGAR -->
+    <section class="view" id="view-week">
+      <div class="vhead"><h2>7 dagar</h2><span class="hint">min / max</span></div>
+      <div class="days" id="weekList"></div>
+    </section>
+
+    <!-- AI KLÄDVAL -->
+    <section class="view" id="view-ai">
+      <div class="ai-scope">
+        <div class="seg" id="aiScope" style="flex:1.55">
+          <button data-s="now" class="on">Nu</button>
+          <button data-s="today">Idag</button>
+          <button data-s="tomorrow">Imorgon</button>
+        </div>
+        <div class="seg" id="aiAud">
+          <button data-a="adult" class="on">👤 Vuxen</button>
+          <button data-a="child">🧒 Barn</button>
+        </div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-top">
+          <div class="ai-emoji" id="aiEmoji">🧥</div>
+          <div class="ai-head"><b id="aiTitle">Klädval</b><span id="aiSub">–</span></div>
+        </div>
+        <div class="ai-body">
+          <div class="ai-sec">
+            <h4>Lager för lager</h4>
+            <div id="aiLayers" class="layers-grid"></div>
+          </div>
+          <div class="ai-sec">
+            <h4>Varför</h4>
+            <div class="ai-reason" id="aiReason">–</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATUS -->
+    <section class="view" id="view-status">
+      <div class="vhead"><h2>Leverantörsstatus</h2><span class="hint" id="statTime"></span></div>
+      <div class="status-list" id="statusList"></div>
+      <div class="status-note">
+        <b>Så kombineras data:</b> Appen hämtar från SMHI (snow1gv1) och MET Norway parallellt och visar
+        <b>snittet</b> av det båda ger. Saknar en leverantör ett värde – t.ex. UV‑index – lånas det automatiskt
+        i bakgrunden från den andra, eller uppskattas från solhöjd och molntäcke så att inget fält blir tomt.
+        <span style="display:block;margin-top:8px;color:var(--ink3);font-weight:700">Version v7</span>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav" id="nav">
+    <button data-v="now" class="on"><span class="ni">🌤️</span><span class="nl">Idag</span></button>
+    <button data-v="hourly"><span class="ni">🕐</span><span class="nl">24h</span></button>
+    <button data-v="week"><span class="ni">📅</span><span class="nl">7 dagar</span></button>
+    <button data-v="ai"><span class="ni">👕</span><span class="nl">Klädval</span></button>
+    <button data-v="status"><span class="ni">📡</span><span class="nl">Status</span></button>
+  </nav>
+</div>
+
+<!-- Ort-sheet -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3>Välj ort</h3>
+  <button class="gps-btn" id="gpsBtn">🎯 Använd min plats (GPS)</button>
+  <div class="searchrow">
+    <input id="searchInput" type="search" placeholder="Sök ort, t.ex. Göteborg…" autocomplete="off" />
+  </div>
+  <div class="results" id="searchResults"></div>
+  <div class="fav-label">Favoriter (max 5)</div>
+  <div id="favList"></div>
+  <div class="ver">Väderråd · v7</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Detalj-popup (tim/dag) -->
+<div class="pop-scrim" id="popScrim"></div>
+<div class="popcard" id="popCard"><div id="popBody"></div></div>
+
+<script>
+/* =========================================================
+   Väderråd – väder + klädval. Vanilla JS, ett enda anrop-lager.
+   Källor: SMHI snow1gv1 + MET Norway locationforecast/2.0/complete
+========================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const LS = {
+  get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k)) ?? d}catch{return d}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))
+};
+
+const state = {
+  loc: LS.get('loc', null),          // {name, sub, lat, lon}
+  favs: LS.get('favs', []),
+  aud: 'adult',
+  aiScope: 'now',
+  aiAud: 'adult',
+  clockOffset: 0,     // 0 = kommande 12h, 12 = timme 13–24
+  clockSel: 0,        // vald timme (absolut index i data)
+  popup: null,        // {h,title,sub,note} för öppen detalj-popup
+  periods: [],        // dygnets perioder (Idag-fliken)
+  data: null,                        // combined hourly [{t, temp, feels, hum, cloud, precip, uv, wind, symbol, src:{}}]
+  daily: null,
+  status: { smhi:{state:'wait'}, yr:{state:'wait'} }
+};
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ---------- Väder-emoji ---------- */
+function smhiEmoji(c){
+  const m={1:'☀️',2:'🌤️',3:'⛅',4:'⛅',5:'☁️',6:'☁️',7:'🌫️',8:'🌦️',9:'🌦️',10:'🌧️',11:'⛈️',
+    12:'🌨️',13:'🌨️',14:'🌨️',15:'❄️',16:'❄️',17:'❄️',18:'🌧️',19:'🌧️',20:'🌧️',21:'⛈️',
+    22:'🌨️',23:'🌨️',24:'🌨️',25:'❄️',26:'❄️',27:'❄️'};
+  return m[c]||'⛅';
+}
+function smhiDesc(c){
+  const m={1:'Klart',2:'Mest klart',3:'Växlande moln',4:'Halvklart',5:'Molnigt',6:'Mulet',7:'Dimma',
+    8:'Lätta regnskurar',9:'Regnskurar',10:'Kraftiga skurar',11:'Åska',12:'Lätt snöblandat',13:'Snöblandat',
+    14:'Kraftigt snöblandat',15:'Lätt snöby',16:'Snöby',17:'Kraftig snöby',18:'Lätt regn',19:'Regn',
+    20:'Kraftigt regn',21:'Åska',22:'Lätt snöblandat',23:'Snöblandat',24:'Kraftigt snöblandat',
+    25:'Lätt snöfall',26:'Snöfall',27:'Kraftigt snöfall'};
+  return m[c]||'Växlande moln';
+}
+function yrEmoji(code){
+  if(!code) return null;
+  const b=code.replace(/_(day|night|polartwilight)$/,'');
+  if(b==='clearsky') return code.includes('night')?'🌙':'☀️';
+  if(b==='fair') return '🌤️';
+  if(b==='partlycloudy') return '⛅';
+  if(b==='cloudy') return '☁️';
+  if(b==='fog') return '🌫️';
+  if(/thunder/.test(b)) return '⛈️';
+  if(/snow/.test(b)) return '❄️';
+  if(/sleet/.test(b)) return '🌨️';
+  if(/rainshowers|lightrainshowers/.test(b)) return '🌦️';
+  if(/rain/.test(b)) return '🌧️';
+  return '⛅';
+}
+function yrDesc(code){
+  if(!code) return null;
+  const b=code.replace(/_(day|night|polartwilight)$/,'');
+  const m={clearsky:'Klart',fair:'Mest klart',partlycloudy:'Växlande moln',cloudy:'Mulet',fog:'Dimma',
+    lightrain:'Lätt regn',rain:'Regn',heavyrain:'Kraftigt regn',
+    lightrainshowers:'Lätta regnskurar',rainshowers:'Regnskurar',heavyrainshowers:'Kraftiga skurar',
+    lightsleet:'Lätt snöblandat',sleet:'Snöblandat',heavysleet:'Kraftigt snöblandat',
+    lightsleetshowers:'Lätt snöblandat',sleetshowers:'Snöblandade skurar',heavysleetshowers:'Kraftigt snöblandat',
+    lightsnow:'Lätt snöfall',snow:'Snöfall',heavysnow:'Kraftigt snöfall',
+    lightsnowshowers:'Lätta snöbyar',snowshowers:'Snöbyar',heavysnowshowers:'Kraftiga snöbyar',
+    lightrainandthunder:'Åska och regn',rainandthunder:'Åska',heavyrainandthunder:'Kraftig åska',
+    snowandthunder:'Åska och snö',sleetandthunder:'Åska och snöblandat'};
+  return m[b] || 'Växlande moln';
+}
+function windDir(deg){
+  if(deg==null) return '';
+  return ['N','NO','O','SO','S','SV','V','NV'][Math.round(deg/45)%8];
+}
+
+/* ---------- SMHI snow1gv1 ---------- */
+async function fetchSMHI(lat, lon){
+  const url = `https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/${lon.toFixed(6)}/lat/${lat.toFixed(6)}/data.json`;
+  const r = await fetch(url, {cache:'no-store'});
+  if(!r.ok) throw new Error('SMHI '+r.status);
+  const j = await r.json();
+  const series = j.timeSeries || j.timeseries || [];
+  const pick=(d,...names)=>{ for(const n of names){ if(d[n]!=null && d[n]!==9999) return d[n]; } return null; };
+  const findKey=(d,sub)=>{ for(const k in d){ if(k.toLowerCase().includes(sub) && d[k]!==9999) return d[k]; } return null; };
+  return series.map(e=>{
+    const d = e.data || {};
+    let cloud = pick(d,'total_cloud_cover_mean','mean_value_of_total_cloud_cover','total_cloud_cover') ?? findKey(d,'cloud');
+    if(cloud!=null && cloud<=8) cloud = cloud*12.5;         // okta -> %
+    return {
+      t: new Date(e.time || e.validTime),
+      temp: pick(d,'air_temperature','t'),
+      hum:  pick(d,'relative_humidity','r'),
+      cloud: cloud,
+      precip: pick(d,'precipitation_amount_mean','precipitation_amount_median','pmean') ?? findKey(d,'precipitation_amount'),
+      pop: findKey(d,'probability_of_precipitation'),
+      wind: pick(d,'wind_speed','ws'),
+      wdir: pick(d,'wind_from_direction','wd'),
+      symbol: pick(d,'symbol_code','Wsymb2'),
+      emoji: (v=>v!=null?smhiEmoji(v):null)(pick(d,'symbol_code','Wsymb2')),
+      desc: (v=>v!=null?smhiDesc(v):null)(pick(d,'symbol_code','Wsymb2')),
+      uv: null
+    };
+  }).filter(x=>x.temp!=null);
+}
+
+/* ---------- MET Norway ---------- */
+async function fetchYr(lat, lon){
+  const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+  const r = await fetch(url, {cache:'no-store'});
+  if(!r.ok) throw new Error('Yr '+r.status);
+  const j = await r.json();
+  const ts = j.properties?.timeseries || [];
+  return ts.map(e=>{
+    const ins = e.data?.instant?.details || {};
+    const nx = e.data?.next_1_hours || e.data?.next_6_hours || {};
+    const code = nx.summary?.symbol_code || null;
+    return {
+      t: new Date(e.time),
+      temp: ins.air_temperature ?? null,
+      hum: ins.relative_humidity ?? null,
+      cloud: ins.cloud_area_fraction ?? null,
+      precip: nx.details?.precipitation_amount ?? null,
+      pop: nx.details?.probability_of_precipitation ?? e.data?.next_6_hours?.details?.probability_of_precipitation ?? null,
+      wind: ins.wind_speed ?? null,
+      wdir: ins.wind_from_direction ?? null,
+      uv: ins.ultraviolet_index_clear_sky ?? null,
+      symbol: code,
+      emoji: yrEmoji(code),
+      desc: yrDesc(code)
+    };
+  }).filter(x=>x.temp!=null);
+}
+
+/* ---------- UV-uppskattning (fallback) ---------- */
+function estimateUV(date, lat, lon, cloud){
+  const rad=Math.PI/180;
+  const start=Date.UTC(date.getUTCFullYear(),0,0);
+  const doy=(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate())-start)/864e5;
+  const decl=23.45*Math.sin(rad*(360/365)*(doy-81));
+  const hourUTC=date.getUTCHours()+date.getUTCMinutes()/60;
+  const solarTime=hourUTC + lon/15;
+  const H=15*(solarTime-12);
+  const elev=Math.asin(Math.sin(lat*rad)*Math.sin(decl*rad)+Math.cos(lat*rad)*Math.cos(decl*rad)*Math.cos(H*rad))/rad;
+  if(elev<=0) return 0;
+  let uv=Math.round((elev/90)*11 * Math.pow(Math.sin(elev*rad),0.6));
+  if(cloud!=null) uv=Math.round(uv*(1-0.65*(cloud/100)));
+  return Math.max(0,Math.min(11,uv));
+}
+
+/* ---------- Kombinera ---------- */
+function avg(a,b){ if(a==null&&b==null) return null; if(a==null) return b; if(b==null) return a; return (a+b)/2; }
+function estimatePop(precip, cloud){
+  if(precip>=1) return 85;
+  if(precip>=0.4) return 70;
+  if(precip>=0.1) return 50;
+  if(cloud!=null){ if(cloud>=95) return 25; if(cloud>=80) return 15; if(cloud>=55) return 8; }
+  return 3;
+}
+function combine(smhi, yr, lat, lon){
+  const map = new Map();
+  const key = d => d.getUTCFullYear()+'-'+d.getUTCMonth()+'-'+d.getUTCDate()+'-'+d.getUTCHours();
+  const add=(arr,who)=>arr.forEach(x=>{ const k=key(x.t); if(!map.has(k)) map.set(k,{t:x.t,smhi:null,yr:null}); map.get(k)[who]=x; });
+  add(smhi,'smhi'); add(yr,'yr');
+  const out=[...map.values()].sort((a,b)=>a.t-b.t).map(row=>{
+    const s=row.smhi, y=row.yr;
+    const src={};
+    const merge=(p)=>{ const sv=s?.[p], yv=y?.[p]; src[p]= (sv!=null&&yv!=null)?'båda':(sv!=null?'SMHI':(yv!=null?'Yr':'—')); return avg(sv,yv); };
+    const temp=merge('temp'), hum=merge('hum'), cloud=merge('cloud'), precip=merge('precip'), wind=merge('wind');
+    let pop = avg(s?.pop, y?.pop);
+    if(pop==null) pop = estimatePop(precip??0, cloud);
+    let uv = y?.uv;                                   // UV finns bara hos Yr
+    if(uv==null){ uv=estimateUV(row.t,lat,lon,cloud); src.uv='uppskattad'; }
+    else src.uv='Yr';
+    const base = (s && s.emoji) ? s : (y||s);
+    return {
+      t: row.t, temp, hum, cloud, precip:precip??0, wind:wind??0, uv,
+      pop: Math.round(Math.max(0,Math.min(100,pop))),
+      wdir: (s?.wdir ?? y?.wdir ?? null),
+      emoji: (s?.emoji)||(y?.emoji)||'⛅',
+      desc: (s?.desc)||(y?.desc)||'—',
+      feels: feelsLike(temp, wind, hum),
+      src
+    };
+  });
+  return out;
+}
+
+/* ---------- Känns-som ---------- */
+function feelsLike(t, wind, hum){
+  if(t==null) return null;
+  const v=(wind||0)*3.6;
+  if(t<=10 && v>=4.8){
+    const wc=13.12+0.6215*t-11.37*Math.pow(v,0.16)+0.3965*t*Math.pow(v,0.16);
+    return Math.round(wc);
+  }
+  if(t>=27 && hum!=null){
+    const hi=t + 0.05*(hum-40)*Math.max(0,(t-27)/5);
+    return Math.round(hi);
+  }
+  return Math.round(t - Math.min(3,(wind||0)*0.25));
+}
+
+/* ---------- Dygnsdata (7 dagar) ---------- */
+function skyDesc(cloud, precip){
+  if(precip>=0.5) return 'Regnigt';
+  if(cloud==null) return 'Växlande moln';
+  if(cloud<20) return 'Klart';
+  if(cloud<45) return 'Mest klart';
+  if(cloud<70) return 'Halvklart';
+  if(cloud<88) return 'Molnigt';
+  return 'Mulet';
+}
+function toDaily(hours){
+  const days=new Map();
+  hours.forEach(h=>{
+    const d=new Date(h.t); const k=d.toLocaleDateString('sv-SE');
+    if(!days.has(k)) days.set(k,{date:d, temps:[], precip:0, uv:0, pop:0, clouds:[], winds:[], hums:[], mids:[], all:[]});
+    const o=days.get(k);
+    o.temps.push(h.temp); o.precip+=h.precip||0; o.uv=Math.max(o.uv,h.uv||0); o.pop=Math.max(o.pop,h.pop||0); o.clouds.push(h.cloud||0);
+    o.winds.push(h.wind||0); o.hums.push(h.hum||0); o.all.push(h);
+    if(d.getHours()>=11 && d.getHours()<=15) o.mids.push(h);
+  });
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  return [...days.values()].slice(0,7).map(o=>{
+    const mid=o.mids[Math.floor(o.mids.length/2)] || o.all[Math.floor(o.all.length/2)] || null;
+    const cloudAvg=Math.round(mean(o.clouds));
+    return {
+      date:o.date,
+      hi:Math.round(Math.max(...o.temps)), lo:Math.round(Math.min(...o.temps)),
+      precip:Math.round(o.precip*10)/10, uv:o.uv, pop:o.pop,
+      cloud:cloudAvg,
+      wind:Math.round(mean(o.winds)*10)/10, windMax:Math.round(Math.max(...o.winds)*10)/10,
+      hum:Math.round(mean(o.hums)),
+      emoji: (mid&&mid.emoji)||'⛅',
+      desc: (mid&&mid.desc&&mid.desc!=='—') ? mid.desc : skyDesc(cloudAvg, o.precip/Math.max(1,o.all.length))
+    };
+  });
+}
+
+/* =========================================================
+   KLÄDMOTOR – detaljerad, band baserade på känns-som-temp.
+   Bygger på hur plagg faktiskt används i nordiskt klimat.
+========================================================= */
+function outfit(feels, precip, uv, wind, aud){
+  const child = aud==='child';
+  const f = feels;                          // titel/väderband oberoende av vem som klär sig
+  let band;
+
+  if(f>=27) band={key:'het', emoji:'🥵', title:'Värmebölja',
+      base:[['👕','Linne eller tunn t‑shirt','luftig bomull'],['🩳','Shorts','ljust tyg'],['🩴','Sandaler']]};
+  else if(f>=22) band={key:'varmt', emoji:'😎', title:'Varmt & skönt',
+      base:[['👕','T‑shirt i bomull'],['🩳','Shorts eller tunna byxor'],['👟','Lätta skor']]};
+  else if(f>=18) band={key:'behag', emoji:'🙂', title:'Behagligt',
+      base:[['👕','T‑shirt'],['👖','Långbyxor'],['🧥','Tunn tröja att ta på/av'],['👟','Sneakers']]};
+  else if(f>=14) band={key:'svalt', emoji:'🌥️', title:'Svalt',
+      base:[['👕','Långärmad tröja'],['👖','Långbyxor'],['🧥','Lätt jacka eller cardigan'],['👟','Skor']]};
+  else if(f>=9) band={key:'kyligt', emoji:'🍂', title:'Kyligt',
+      base:[['👕','Långärmad + tröja'],['👖','Långbyxor'],['🧥','Jacka'],['👟','Täckta skor']]};
+  else if(f>=4) band={key:'kallt', emoji:'🧥', title:'Kallt',
+      base:[['🧦','Tröja eller fleece'],['👖','Byxor, gärna fodrade'],['🧥','Höst‑/vinterjacka'],['🧢','Tunn mössa'],['🥾','Kängor']]};
+  else if(f>=-3) band={key:'kylslaget', emoji:'❄️', title:'Kylslaget',
+      base:[['🩲','Underställ upptill'],['🧶','Tjocktröja'],['🧥','Vinterjacka'],['👖','Fodrade byxor'],['🧢','Mössa'],['🧤','Vantar'],['🥾','Varma kängor']]};
+  else if(f>=-10) band={key:'vinter', emoji:'🥶', title:'Vinterkyla',
+      base:[['🩲','Underställ upp & ner'],['🧶','Tjocktröja / fleece'],['🧥','Varm vinterjacka'],['👖','Vinterbyxor'],['🧢','Mössa'],['🧣','Halsduk'],['🧤','Vantar'],['🥾','Vinterkängor']]};
+  else band={key:'sträng', emoji:'🧊', title:'Sträng kyla',
+      base:[['🩲','Dubbelt underställ (ull närmast hud)'],['🧶','Mellanlager fleece + tjocktröja'],['🧥','Kraftig vinterjacka'],['👖','Vinteroverall / vinterbyxor'],['🧢','Mössa som täcker öron'],['🧣','Halsduk över näsan'],['🧤','Tumvantar'],['🥾','Rejäla pjäxor + ullstrumpor']]};
+
+  const extras=[];
+  // Barn kyls fortare → lägg på ETT extra lager (men samma vädertitel som för vuxen)
+  if(child && f<16) extras.push(['🧅','Ett extra mellanlager','barn kyls fortare än vuxna']);
+  // Nederbörd
+  if(precip>=0.5){
+    if(f<=1) extras.push(['🌨️','Vattentätt yttersta lager','snön blöter ner']);
+    else { extras.push(['🧥','Regnjacka / vattentät jacka']); extras.push(['☂️','Paraply']); extras.push(['🥾','Vattentäta skor / stövlar']); }
+    if(child) extras.push(['🦺','Regnställ eller galonbyxor','barn hittar varenda pöl']);
+  } else if(precip>=0.1){
+    extras.push(['🧥','Ha en tunn regnjacka redo','lätt duggregn möjligt']);
+  }
+  // UV
+  if(uv>=6) extras.push(['🧴','Solkräm SPF 30+, solglasögon & keps','stark sol']);
+  else if(uv>=3) extras.push(['🕶️','Solglasögon, ev. solkräm']);
+  if(uv>=3 && child) extras.push(['🧢','Solhatt till barnet','känslig hud']);
+  // Vind
+  if(wind>=8 && f<12) extras.push(['💨','Vindtät ytterjacka','byig vind kyler']);
+  // Barn-specifika smågrejer
+  if(child){
+    if(f<4) extras.push(['🧤','Vantar på snöre','tappas annars bort']);
+    extras.push(['🎒','Extra ombyte med','barn blir blöta/leriga']);
+  }
+
+  return { band, extras };
+}
+
+/* ---------- Enkel klädsymbol per timme ---------- */
+function clothSym(feels, precip){
+  if(precip>=0.5) return '☂️';           // regn
+  if(feels>=18) return '👕';             // t-shirt
+  if(feels>=8)  return '🧥';             // jacka/tröja
+  if(feels>=0)  return '🧣';             // halsduk, kallt
+  return '🧤';                           // vantar, minusgrader
+}
+
+/* ---------- Varmaste/kallaste sammanhängande intervall ---------- */
+function longestRun(arr, pred){
+  let best=null, s=-1;
+  for(let i=0;i<=arr.length;i++){
+    const ok=i<arr.length && pred(arr[i]);
+    if(ok && s<0) s=i;
+    if(!ok && s>=0){ const len=i-s; if(!best||len>best.len) best={a:s,b:i-1,len}; s=-1; }
+  }
+  return best ? {from:arr[best.a].t, to:arr[best.b].t, len:best.len} : null;
+}
+function tempRanges(hours){
+  const arr=hours.slice(0,24);
+  if(arr.length<3) return {warm:null,cold:null};
+  const temps=arr.map(h=>h.temp);
+  const max=Math.max(...temps), min=Math.min(...temps);
+  const warm=longestRun(arr, h=>h.temp>=max-2);
+  const cold=longestRun(arr, h=>h.temp<=min+2);
+  return {warm, cold, max:Math.round(max), min:Math.round(min)};
+}
+const hh = d => String(d.getHours()).padStart(2,'0');
+
+/* =========================================================
+   RENDER
+========================================================= */
+function fmt(v,dec=0){ return v==null?'–':(Math.round(v*Math.pow(10,dec))/Math.pow(10,dec)); }
+
+function renderNow(){
+  const now = state.data[0];
+  if(!now) return;
+  $('#nowIco').textContent = now.emoji;
+  $('#nowTemp').innerHTML = `${fmt(now.temp)}<sup>°</sup>`;
+  $('#nowDesc').textContent = now.desc;
+  $('#nowFeels').textContent = `Känns som ${fmt(now.feels)}°`;
+  const d0 = state.daily[0];
+  $('#nowRange').textContent = d0 ? `↑${d0.hi}° ↓${d0.lo}°` : '';
+  const up=[];
+  if(state.status.smhi?.state==='up') up.push('SMHI');
+  if(state.status.yr?.state==='up') up.push('MET Norway');
+  $('#nowConsensus').textContent = up.length ? (up.length>1?'Snitt av '+up.join(' + '):'Källa: '+up[0]) : '';
+
+  const wd = windDir(now.wdir);
+  const M=[
+    ['🌧️','Regnchans', fmt(now.pop)+'%'],
+    ['💧','Nederb.', fmt(now.precip,1)+' mm'],
+    ['💨','Vind', fmt(now.wind,1)+(wd?' '+wd:'')],
+    ['☀️','UV', fmt(now.uv)],
+    ['☁️','Moln', fmt(now.cloud)+'%'],
+    ['💦','Fukt', fmt(now.hum)+'%'],
+  ];
+  $('#nowMetrics').innerHTML = M.map(m=>`
+    <div class="metric"><div class="mi">${m[0]}</div><div class="mv">${m[2]}</div><div class="ml">${m[1]}</div></div>`).join('');
+
+  renderPeriods();
+}
+
+/* ---------- Dygnets perioder ---------- */
+const PERIODS=[
+  {key:'natt', label:'Natt', a:0, b:6, ico:'🌙'},
+  {key:'morgon', label:'Morgon', a:6, b:9, ico:'🌅'},
+  {key:'formiddag', label:'Förmiddag', a:9, b:12, ico:'🌤️'},
+  {key:'eftermiddag', label:'Eftermiddag', a:12, b:18, ico:'☀️'},
+  {key:'kvall', label:'Kväll', a:18, b:24, ico:'🌇'},
+];
+function buildPeriods(){
+  const nowT = state.data[0].t;
+  const wins=[];
+  for(let day=0; day<2; day++){
+    for(const p of PERIODS){
+      const base=new Date(nowT); base.setHours(0,0,0,0); base.setDate(base.getDate()+day);
+      const start=new Date(base); start.setHours(p.a);
+      const end=new Date(base); end.setHours(p.b);
+      if(end<=nowT) continue;
+      const hrs=state.data.filter(h=>h.t>=start && h.t<end);
+      if(!hrs.length) continue;
+      const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+      const mid=hrs[Math.floor(hrs.length/2)];
+      wins.push({
+        ...p, start, end, tomorrow:day===1,
+        hi:Math.round(Math.max(...hrs.map(h=>h.temp))), lo:Math.round(Math.min(...hrs.map(h=>h.temp))),
+        temp:mean(hrs.map(h=>h.temp)), feels:Math.round(mean(hrs.map(h=>h.feels))),
+        precip:Math.round(hrs.reduce((s,h)=>s+h.precip,0)*10)/10,
+        pop:Math.max(...hrs.map(h=>h.pop||0)),
+        cloud:Math.round(mean(hrs.map(h=>h.cloud||0))),
+        hum:Math.round(mean(hrs.map(h=>h.hum||0))),
+        wind:Math.round(mean(hrs.map(h=>h.wind||0))*10)/10,
+        uv:Math.max(...hrs.map(h=>h.uv||0)),
+        wdir:mid.wdir, emoji:mid.emoji,
+        desc:(mid.desc&&mid.desc!=='—')?mid.desc:skyDesc(mean(hrs.map(h=>h.cloud||0)), hrs.reduce((s,h)=>s+h.precip,0)/hrs.length)
+      });
+      if(wins.length>=5) return wins;
+    }
+  }
+  return wins;
+}
+function renderPeriods(){
+  const wins=buildPeriods();
+  state.periods=wins;
+  $('#periodList').innerHTML = wins.map((w,i)=>`
+    <button class="prow" data-i="${i}">
+      <span class="pi">${w.emoji}</span>
+      <span class="pn"><b>${w.label}${w.tomorrow?' <small style="color:var(--ink3)">imorgon</small>':''}</b>
+        <small>${String(w.a).padStart(2,'0')}–${String(w.b).padStart(2,'0')}</small>
+        <span class="pdsc">${w.desc}</span></span>
+      <span class="ppop">🌧 ${w.pop}%</span>
+      <span class="ptemps"><b style="color:${tempColor(w.hi)}">${w.hi}°</b><small>${w.lo}°</small></span>
+      <span class="pcl">${clothSym(w.feels, w.precip)}</span>
+    </button>`).join('');
+}
+
+/* ---------- Temperaturfärg ---------- */
+function tempColor(t){
+  if(t==null) return '#8a99ab';
+  const stops=[[-20,'#3856b8'],[-8,'#4a86d6'],[0,'#3fa5cc'],[7,'#3fb59a'],[13,'#5cb35a'],
+    [17,'#c9a63a'],[21,'#ef9038'],[26,'#e5673a'],[31,'#cf3b3b']];
+  let c=stops[0][1];
+  for(const [th,col] of stops){ if(t>=th) c=col; }
+  return c;
+}
+
+/* ---------- 12-timmarsklocka (riktiga klockpositioner) ---------- */
+function renderClock(){
+  const off = state.clockOffset;
+  const hrs = state.data.slice(off, off+12);
+  if(!hrs.length) return;
+  if(state.clockSel < off || state.clockSel >= off+12) state.clockSel = off;
+  const R=36, cx=50, cy=50;
+  const nowH = state.data[0] ? state.data[0].t.getHours() : new Date().getHours();
+  let marks='', labels='', ticks='';
+  hrs.forEach((h,i)=>{
+    const abs=off+i;
+    const p = h.t.getHours() % 12;                 // 0=kl 12/24 upptill, medurs
+    const ang=(-90 + p*30)*Math.PI/180;
+    const card = (p%3===0);                          // 12,3,6,9 större
+    const x=cx+R*Math.cos(ang), y=cy+R*Math.sin(ang);
+    const isNow = h.t.getHours()===nowH && abs===0;
+    marks += `<button class="mk${abs===state.clockSel?' sel':''}${isNow?' isnow':''}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" data-i="${abs}">
+      <span class="me">${h.emoji}</span>
+      <span class="mt" style="color:${tempColor(h.temp)}">${fmt(h.temp)}°</span>
+      <span class="mc">${clothSym(h.feels,h.precip)}</span></button>`;
+    const lr=47, lx=cx+lr*Math.cos(ang), ly=cy+lr*Math.sin(ang);
+    labels += `<div class="lab${card?' card':''}" style="left:${lx.toFixed(2)}%;top:${ly.toFixed(2)}%">${hh(h.t)}</div>`;
+    const r1=42, r2=card?45.5:44.5, a=ang;
+    ticks += `<line x1="${(50+r1*Math.cos(a)).toFixed(2)}" y1="${(50+r1*Math.sin(a)).toFixed(2)}" x2="${(50+r2*Math.cos(a)).toFixed(2)}" y2="${(50+r2*Math.sin(a)).toFixed(2)}" stroke="rgba(19,33,50,${card?'.28':'.12'})" stroke-width="${card?0.7:0.4}"/>`;
+  });
+  const pNow = nowH%12, angNow=(-90+pNow*30)*Math.PI/180;
+  const hand = `<line x1="${(50+24*Math.cos(angNow)).toFixed(2)}" y1="${(50+24*Math.sin(angNow)).toFixed(2)}" x2="${(50+31*Math.cos(angNow)).toFixed(2)}" y2="${(50+31*Math.sin(angNow)).toFixed(2)}" stroke="#3e8ef0" stroke-width="1.4" stroke-linecap="round" opacity="0.9"/>`;
+  const svg=`<svg viewBox="0 0 100 100">${ticks}${hand}<circle cx="50" cy="50" r="1.6" fill="#3e8ef0"/></svg>`;
+  const sel=state.data[state.clockSel]; const wd=windDir(sel.wdir);
+  const isNowSel = state.clockSel===0;
+  const center=`<div class="center" id="clockCenter">
+    <div class="ctime">${isNowSel?'NU':hh(sel.t)+':00'}</div>
+    <div class="ci">${sel.emoji}</div>
+    <div class="ct">${fmt(sel.temp)}°</div>
+    <div class="cs">${sel.desc}</div>
+    <div class="cr"><span>🤔 ${fmt(sel.feels)}°</span><span>🌧 ${fmt(sel.pop)}%</span><span>💨 ${fmt(sel.wind,1)}</span></div>
+    <div class="cmore">Detaljer ›</div>
+  </div>`;
+  $('#clockDial').innerHTML = svg + center + labels + marks;
+  renderRangeBand();
+  sizeClock();
+}
+function sizeClock(){
+  const clock=$('#clock'); if(!clock) return;
+  const wrap=clock.parentElement;                 // .clock-wrap (endast klockan nu)
+  const wrapH=wrap.clientHeight, wrapW=wrap.clientWidth;
+  if(wrapH<60||wrapW<60) return;                  // fliken inte synlig än
+  const size=Math.max(200, Math.min(wrapW, wrapH));
+  clock.style.width=size+'px';
+  clock.style.height=size+'px';
+}
+function selectClockHour(abs){ state.clockSel=abs; renderClock(); }
+function renderRangeBand(){
+  const {warm, cold, max, min}=tempRanges(state.data);
+  const parts=[];
+  if(warm && warm.len>=2) parts.push(`<span class="range-pill warm">🔥 Varmast ${hh(warm.from)}–${hh(warm.to)} · ${max}°</span>`);
+  if(cold && cold.len>=2) parts.push(`<span class="range-pill cold">❄️ Kallast ${hh(cold.from)}–${hh(cold.to)} · ${min}°</span>`);
+  $('#rangeBand').innerHTML = parts.join('');
+}
+
+/* ---------- Detalj-popup (delas av klocka, 24h, 7-dygn) ---------- */
+function paramGrid(h){
+  const wd=windDir(h.wdir);
+  const P=[
+    ['🌧️','Regnchans', fmt(h.pop)+'%'],
+    ['☀️','UV', fmt(h.uv)],
+    ['💧','Nederbörd', fmt(h.precip,1)+' mm'],
+    ['☁️','Molntäcke', fmt(h.cloud)+'%'],
+    ['💦','Fuktighet', fmt(h.hum)+'%'],
+    ['💨','Vind', fmt(h.wind,1)+' m/s'+(wd?' '+wd:'')],
+  ];
+  return P.map(p=>`<div class="pg"><div style="font-size:14px">${p[0]}</div><div class="pv">${p[2]}</div><div class="pl">${p[1]}</div></div>`).join('');
+}
+function audToggleHTML(){
+  const a=state.aiAud;
+  return `<div class="aud-toggle popaud">
+    <button data-a="adult" class="${a==='adult'?'on':''}">👤 Vuxen</button>
+    <button data-a="child" class="${a==='child'?'on':''}">🧒 Barn</button></div>`;
+}
+function setAudience(a){
+  state.aiAud=a;
+  $$('#aiAud button').forEach(x=>x.classList.toggle('on',x.dataset.a===a));
+  if(state.popup && $('#popCard').classList.contains('show')) renderPopup();
+  if($('#view-ai').classList.contains('active')) renderAI();
+}
+function clothLayersHTML(band, extras){
+  return [...band.base, ...extras].slice(0,8).map(c=>`
+    <div class="layer"><div class="le">${c[0]}</div>
+    <div class="lt"><b>${c[1]}</b>${c[2]?`<span>${c[2]}</span>`:''}</div></div>`).join('');
+}
+function openDetail(h, title, sub, note){
+  state.popup={h,title,sub,note};
+  renderPopup();
+  $('#popScrim').classList.add('show'); $('#popCard').classList.add('show');
+}
+function renderPopup(){
+  const {h,title,sub,note}=state.popup;
+  const {band, extras}=outfit(h.feels, h.precip, h.uv, h.wind, state.aiAud);
+  $('#popBody').innerHTML=`
+    <div class="pop-head"><div class="pt">${title}<small>${sub||''}</small></div><button class="pop-close" id="popClose">✕</button></div>
+    <div class="pop-hero"><div class="pe">${h.emoji}</div>
+      <div><div class="ptemp">${fmt(h.temp)}°</div><div class="pd">${h.desc}</div><div class="pf">Känns som ${fmt(h.feels)}°</div></div></div>
+    ${note?`<div class="pop-note">${note}</div>`:''}
+    <div class="pop-grid">${paramGrid(h)}</div>
+    <div class="pop-cloth">
+      <div class="pc-head"><h5>Klädråd</h5>${audToggleHTML()}</div>
+      <div class="band">${band.emoji} ${band.title}</div>
+      <div class="layers-grid">${clothLayersHTML(band, extras)}</div>
+      <div class="ai-reason">${buildReason(h, state.aiAud)}</div>
+    </div>`;
+  $('#popClose').onclick=closeDetail;
+}
+function closeDetail(){ $('#popScrim').classList.remove('show'); $('#popCard').classList.remove('show'); }
+
+function renderHourly(){
+  renderClock();
+}
+function openStory(){
+  $('#popBody').innerHTML=`
+    <div class="pop-head"><div class="pt">Dagens prognos<small>Närmaste dygnet</small></div><button class="pop-close" id="popClose">✕</button></div>
+    <div class="narrative-pop">${dayNarrative()}</div>`;
+  $('#popClose').onclick=closeDetail;
+  $('#popScrim').classList.add('show'); $('#popCard').classList.add('show');
+}
+
+/* ---------- Berättande prognos ---------- */
+function fmtRange(a,b){ return `${hh(a)}–${hh(b)}`; }
+function dayNarrative(){
+  const hrs=state.data.slice(0,24);
+  if(hrs.length<4) return '';
+  const temps=hrs.map(h=>h.temp);
+  const maxT=Math.max(...temps), minT=Math.min(...temps);
+  const maxH=hrs[temps.indexOf(maxT)], minH=hrs[temps.indexOf(minT)];
+  const totP=hrs.reduce((s,h)=>s+h.precip,0);
+  const popMax=Math.max(...hrs.map(h=>h.pop||0));
+  const windMax=Math.max(...hrs.map(h=>h.wind||0));
+  const windH=hrs.find(h=>h.wind===windMax);
+  const uvMax=Math.max(...hrs.map(h=>h.uv||0));
+  const cloudFirst=hrs.slice(0,8).reduce((s,h)=>s+(h.cloud||0),0)/8;
+  const cloudLast=hrs.slice(-8).reduce((s,h)=>s+(h.cloud||0),0)/8;
+  const rain=longestRun(hrs,h=>h.precip>=0.1);
+  const p=[];
+  p.push(`Närmaste dygnet blir <b>${skyDesc((cloudFirst+cloudLast)/2, totP/24).toLowerCase()}</b> med temperaturer mellan <b>${Math.round(minT)}°</b> och <b>${Math.round(maxT)}°</b> – varmast kring kl ${hh(maxH.t)}, kallast kring kl ${hh(minH.t)}.`);
+  if(totP<0.2 && popMax<30){
+    p.push(`Det ser <b>torrt</b> ut: som mest ${popMax}% risk för nederbörd.`);
+  } else if(rain){
+    p.push(`Nederbörd väntas främst <b>${fmtRange(rain.from,rain.to)}</b> (upp till ${popMax}% sannolikhet, totalt ca ${Math.round(totP*10)/10} mm).`);
+  } else {
+    p.push(`Spridda skurar möjliga under dygnet (upp till ${popMax}% sannolikhet, ca ${Math.round(totP*10)/10} mm totalt).`);
+  }
+  const diff=cloudLast-cloudFirst;
+  if(Math.abs(diff)>=20) p.push(diff>0?`Molnigheten <b>ökar</b> efterhand.`:`Det <b>klarnar upp</b> efterhand.`);
+  if(windMax>=10) p.push(`Blåsigt, med vind upp mot <b>${Math.round(windMax)} m/s</b>${windH?` kring kl ${hh(windH.t)}`:''} – vinden gör att det känns kallare än termometern visar.`);
+  else if(windMax>=6) p.push(`Måttlig vind, som mest ca ${Math.round(windMax)} m/s.`);
+  if(uvMax>=6) p.push(`UV-index når <b>${Math.round(uvMax)}</b> mitt på dagen – solskydd rekommenderas.`);
+  else if(uvMax>=3) p.push(`UV-index når ${Math.round(uvMax)} – tänk på solglasögon mitt på dagen.`);
+  const w=buildPeriods()[0];
+  if(w) p.push(`Just nu (${w.label.toLowerCase()}): ${w.emoji} ${w.desc.toLowerCase()}, klädtips ${clothSym(w.feels,w.precip)}.`);
+  return p.join(' ');
+}
+function periodNarrative(w){
+  const p=[];
+  p.push(`${w.label}${w.tomorrow?' imorgon':''} (kl ${String(w.a).padStart(2,'0')}–${String(w.b).padStart(2,'0')}) blir ${w.desc.toLowerCase()} med ${w.lo}–${w.hi}° (känns som ca ${w.feels}°).`);
+  if(w.pop>=50) p.push(`Hög risk för nederbörd (${w.pop}%${w.precip>0?`, ca ${w.precip} mm`:''}).`);
+  else if(w.pop>=25) p.push(`Viss risk för nederbörd (${w.pop}%).`);
+  else p.push(`Låg regnrisk (${w.pop}%).`);
+  if(w.wind>=8) p.push(`Blåsigt, kring ${w.wind} m/s.`);
+  if(w.uv>=3) p.push(`UV-index upp till ${Math.round(w.uv)}.`);
+  return p.join(' ');
+}
+
+function renderWeek(){
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  $('#weekList').innerHTML = state.daily.map((d,i)=>{
+    const name = i===0 ? 'Idag' : cap(d.date.toLocaleDateString('sv-SE',{weekday:'long'}));
+    const date = d.date.toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
+    return `<button class="drow" data-i="${i}">
+      <span class="dn">${name}<small>${date}</small></span>
+      <span class="di">${d.emoji}</span>
+      <span class="dmid">
+        <span class="ddesc">${d.desc}</span>
+        <span class="dparams"><span>🌧 ${d.pop}%</span><span>💧 ${d.precip} mm</span><span>☀️ UV ${d.uv}</span><span>💨 ${fmt(d.wind,1)}</span></span>
+      </span>
+      <span class="dtemps"><b>${d.hi}°</b><small>${d.lo}°</small></span>
+    </button>`;
+  }).join('');
+}
+
+function renderAI(){
+  if(!state.data || !state.data.length) return;
+  let ref;
+  if(state.aiScope==='now') ref=state.data[0];
+  else if(state.aiScope==='today'){ const mid=state.data.find(h=>h.t.getHours()>=13)||state.data[0]; ref=aggScope(0,mid); }
+  else { const tm=new Date(); tm.setDate(tm.getDate()+1); ref=aggDay(tm); }
+  if(!ref) return;
+  const {band, extras}=outfit(ref.feels, ref.precip, ref.uv, ref.wind, state.aiAud);
+  $('#aiEmoji').textContent = band.emoji;
+  const scopeTxt={now:'Just nu',today:'Idag (dagtid)',tomorrow:'Imorgon'}[state.aiScope];
+  $('#aiTitle').textContent = band.title;
+  $('#aiSub').textContent = `${scopeTxt} · ${fmt(ref.temp)}° (känns ${fmt(ref.feels)}°) · ${state.aiAud==='child'?'barn':'vuxen'}`;
+  const all=[...band.base, ...extras].slice(0,8);
+  $('#aiLayers').innerHTML = all.map(c=>`
+    <div class="layer"><div class="le">${c[0]}</div>
+    <div class="lt"><b>${c[1]}</b>${c[2]?`<span>${c[2]}</span>`:''}</div></div>`).join('');
+  $('#aiReason').textContent = buildReason(ref, state.aiAud, scopeTxt);
+}
+function aggScope(startIdx, mid){
+  // representativt värde för idag: använd mid-dag men max nederbörd/uv över dagen
+  const today=new Date().toLocaleDateString('sv-SE');
+  const hrs=state.data.filter(h=>h.t.toLocaleDateString('sv-SE')===today);
+  const precip=Math.max(...hrs.map(h=>h.precip));
+  const uv=Math.max(...hrs.map(h=>h.uv));
+  return {...mid, precip, uv};
+}
+function aggDay(dateObj){
+  const key=dateObj.toLocaleDateString('sv-SE');
+  const hrs=state.data.filter(h=>h.t.toLocaleDateString('sv-SE')===key);
+  if(!hrs.length) return state.data[0];
+  const mid=hrs.find(h=>h.t.getHours()>=13)||hrs[Math.floor(hrs.length/2)];
+  return {...mid, precip:Math.max(...hrs.map(h=>h.precip)), uv:Math.max(...hrs.map(h=>h.uv))};
+}
+
+function buildReason(h, aud, scope){
+  const child = aud==='child';
+  const p=[];
+  const when = scope ? scope.toLowerCase() : 'nu';
+  const diff = Math.round((h.feels - h.temp));
+  if(Math.abs(diff)>=2){
+    p.push(`Det är ${fmt(h.temp)}° men känns som ${fmt(h.feels)}° ${diff<0?`eftersom vinden (${fmt(h.wind,1)} m/s) kyler`:`på grund av sol och stillhet`}.`);
+  } else {
+    p.push(`Ungefär ${fmt(h.temp)}° och känns lika mycket.`);
+  }
+  if(h.precip>=0.5) p.push(`Räkna med nederbörd (${fmt(h.precip,1)} mm) – ta med regnskydd.`);
+  else if(h.precip>=0.1) p.push(`Lätt risk för duggregn.`);
+  if(h.uv>=6) p.push(`UV‑index ${fmt(h.uv)} är högt – solskydd behövs.`);
+  else if(h.uv>=3) p.push(`UV‑index ${fmt(h.uv)} – tänk på solglasögon.`);
+  if(child) p.push(h.feels<8 ? `Barn blir kalla fortare än vuxna, så lägg på ett extra lager och lätt att ta av.` : `Klä barnet i lager som är lätta att ta av när det leker och blir varmt.`);
+  return p.join(' ');
+}
+
+function renderAll(){
+  renderNow(); renderHourly(); renderWeek(); renderAI();
+}
+
+/* =========================================================
+   STATUS-fliken
+========================================================= */
+function renderStatus(){
+  const provs=[
+    {id:'smhi', name:'SMHI', sub:'snow1gv1 · Sveriges meteorologiska institut'},
+    {id:'yr', name:'MET Norway (Yr)', sub:'locationforecast 2.0 · met.no'}
+  ];
+  const paramNames={temp:'Temp',hum:'Fukt',cloud:'Moln',precip:'Nederbörd',wind:'Vind',uv:'UV'};
+  $('#statusList').innerHTML = provs.map(pv=>{
+    const s=state.status[pv.id];
+    const cls = s.state; // up/down/wait
+    const label = cls==='up'?'IGÅNG':cls==='down'?'NERE':'TESTAR…';
+    let paramsHtml='';
+    if(pv.id==='smhi'){
+      const has={temp:1,hum:1,cloud:1,precip:1,wind:1,uv:0};
+      paramsHtml=Object.keys(paramNames).map(k=>`<span class="ptag ${has[k]?'':'miss'}">${paramNames[k]}${has[k]?'':' –'}</span>`).join('');
+    } else {
+      const has={temp:1,hum:1,cloud:1,precip:1,wind:1,uv:1};
+      paramsHtml=Object.keys(paramNames).map(k=>`<span class="ptag">${paramNames[k]}</span>`).join('');
+    }
+    return `<div class="prov">
+      <div class="prov-head"><span class="dot ${cls}"></span><b>${pv.name}</b><span class="st ${cls}">${label}</span></div>
+      <div class="prov-sub">${pv.sub}${s.ms?` · svar ${s.ms} ms`:''}</div>
+      <div class="params">${paramsHtml}</div>
+      ${pv.id==='smhi'?'<div class="prov-sub" style="margin-top:8px">SMHI saknar UV‑index → lånas från MET Norway eller uppskattas.</div>':''}
+    </div>`;
+  }).join('');
+  $('#statTime').textContent = state.status.time ? 'Testat '+state.status.time : '';
+}
+
+/* =========================================================
+   DATA-LADDNING
+========================================================= */
+async function loadWeather(){
+  if(!state.loc) return;
+  const {lat, lon}=state.loc;
+  $('#loading').classList.add('show');
+  state.status={smhi:{state:'wait'},yr:{state:'wait'},time:''};
+  renderStatus();
+
+  const t0=performance.now();
+  const smhiP = fetchSMHI(lat,lon).then(d=>{ state.status.smhi={state:'up',ms:Math.round(performance.now()-t0)}; return d; })
+                                  .catch(e=>{ state.status.smhi={state:'down'}; console.warn('SMHI',e); return []; });
+  const t1=performance.now();
+  const yrP = fetchYr(lat,lon).then(d=>{ state.status.yr={state:'up',ms:Math.round(performance.now()-t1)}; return d; })
+                              .catch(e=>{ state.status.yr={state:'down'}; console.warn('Yr',e); return []; });
+
+  const [smhi, yr] = await Promise.all([smhiP, yrP]);
+  state.status.time = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  renderStatus();
+
+  if(!smhi.length && !yr.length){
+    $('#loading').classList.remove('show');
+    $('#view-now').innerHTML='<div class="err"><b>Kunde inte hämta väderdata</b>Kontrollera nätet och försök igen. Tjänsterna kan även vara tillfälligt nere – se fliken Status.</div>';
+    return;
+  }
+  state.data = combine(smhi, yr, lat, lon).filter(h=>h.t >= new Date(Date.now()-3600e3)).slice(0,72);
+  state.daily = toDaily(state.data);
+  updateTheme(state.data[0]);
+  renderAll();
+  $('#loading').classList.remove('show');
+  requestAnimationFrame(sizeClock);
+}
+
+function updateTheme(now){
+  if(!now) return;
+  const t=now.temp;
+  let warm=0, cool=0;
+  if(t>=20) warm=0.28; else if(t>=12) warm=0.14; else if(t<=2) cool=0.28; else if(t<=8) cool=0.16;
+  document.body.style.background=
+    `radial-gradient(120% 80% at 80% -10%, rgba(255,180,90,${0.10+warm}), transparent 55%),`+
+    `radial-gradient(120% 90% at 0% 110%, rgba(80,150,235,${0.12+cool}), transparent 55%),`+
+    `linear-gradient(160deg, var(--bg1), var(--bg2) 60%, var(--bg3))`;
+}
+
+/* =========================================================
+   PLATS: GPS, sök, favoriter
+========================================================= */
+async function reverseGeo(lat, lon){
+  try{
+    const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=sv`);
+    const j=await r.json();
+    const name=j.city||j.locality||j.principalSubdivision||'Min plats';
+    return {name, sub:(j.principalSubdivision||j.countryName||'')};
+  }catch{ return {name:'Min plats', sub:''}; }
+}
+function useGPS(){
+  if(!navigator.geolocation){ toast('GPS stöds ej'); return; }
+  toast('Hämtar din plats…');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude:lat, longitude:lon}=pos.coords;
+    const g=await reverseGeo(lat,lon);
+    setLocation({name:g.name, sub:g.sub||'Din plats (GPS)', lat, lon});
+    closeSheet();
+  }, err=>{ toast('Kunde inte hämta plats'); }, {enableHighAccuracy:true, timeout:8000});
+}
+async function searchPlaces(q){
+  if(q.trim().length<2){ $('#searchResults').innerHTML=''; return; }
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=sv&format=json`);
+    const j=await r.json();
+    const res=j.results||[];
+    if(!res.length){ $('#searchResults').innerHTML='<div class="empty">Inga träffar</div>'; return; }
+    $('#searchResults').innerHTML=res.map(p=>{
+      const sub=[p.admin1,p.country].filter(Boolean).join(', ');
+      return `<div class="res" data-lat="${p.latitude}" data-lon="${p.longitude}" data-name="${p.name}" data-sub="${sub}">
+        <div><div class="rn">${p.name}</div><div class="rs">${sub}</div></div>
+        <div class="add">＋</div></div>`;
+    }).join('');
+  }catch{ $('#searchResults').innerHTML='<div class="empty">Sökning misslyckades</div>'; }
+}
+function setLocation(loc, addFav){
+  state.loc=loc; LS.set('loc',loc);
+  $('#locName').textContent=loc.name;
+  $('#locSub').textContent=loc.sub||'Tryck för att byta ort';
+  if(addFav) addFavorite(loc);
+  loadWeather();
+}
+function addFavorite(loc){
+  if(state.favs.find(f=>f.name===loc.name && Math.abs(f.lat-loc.lat)<0.01)) return;
+  if(state.favs.length>=5){ toast('Max 5 favoriter – ta bort en först'); renderFavs(); return; }
+  state.favs.push({name:loc.name, sub:loc.sub, lat:loc.lat, lon:loc.lon});
+  LS.set('favs',state.favs); renderFavs(); toast('Sparad som favorit');
+}
+function removeFavorite(i){ state.favs.splice(i,1); LS.set('favs',state.favs); renderFavs(); }
+function renderFavs(){
+  if(!state.favs.length){ $('#favList').innerHTML='<div class="empty">Inga favoriter sparade än. Sök en ort och tryck ＋.</div>'; return; }
+  $('#favList').innerHTML=state.favs.map((f,i)=>`
+    <div class="fav" data-i="${i}">
+      <span>⭐</span><div><div class="fn">${f.name}</div><div class="rs" style="font-size:11px;color:var(--ink3)">${f.sub||''}</div></div>
+      <button class="del" data-del="${i}">✕</button>
+    </div>`).join('');
+}
+
+/* ---------- Sheet öppna/stäng ---------- */
+function openSheet(){ $('#scrim').classList.add('show'); $('#sheet').classList.add('show'); renderFavs(); }
+function closeSheet(){ $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); $('#searchInput').value=''; $('#searchResults').innerHTML=''; }
+
+/* =========================================================
+   NAV + EVENTS
+========================================================= */
+function switchView(v){
+  $$('.view').forEach(x=>x.classList.remove('active'));
+  $('#view-'+v).classList.add('active');
+  $$('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  if(v==='ai') renderAI();
+  if(v==='status') renderStatus();
+  if(v==='hourly'){ requestAnimationFrame(()=>{ sizeClock(); }); }
+}
+$('#nav').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) switchView(b.dataset.v); });
+$('#locBtn').addEventListener('click', openSheet);
+$('#scrim').addEventListener('click', closeSheet);
+$('#gpsBtn').addEventListener('click', useGPS);
+$('#gpsQuick').addEventListener('click', useGPS);
+$('#refreshBtn').addEventListener('click', ()=>{ toast('Uppdaterar…'); loadWeather(); });
+
+let searchT;
+$('#searchInput').addEventListener('input', e=>{ clearTimeout(searchT); searchT=setTimeout(()=>searchPlaces(e.target.value),320); });
+$('#searchResults').addEventListener('click', e=>{
+  const r=e.target.closest('.res'); if(!r) return;
+  const loc={name:r.dataset.name, sub:r.dataset.sub, lat:+r.dataset.lat, lon:+r.dataset.lon};
+  setLocation(loc, true); closeSheet();
+});
+$('#favList').addEventListener('click', e=>{
+  const del=e.target.closest('[data-del]');
+  if(del){ e.stopPropagation(); removeFavorite(+del.dataset.del); return; }
+  const f=e.target.closest('.fav'); if(!f) return;
+  const fav=state.favs[+f.dataset.i]; setLocation(fav); closeSheet();
+});
+const capF = s => s.charAt(0).toUpperCase()+s.slice(1);
+$('#clock').addEventListener('click', e=>{
+  const mk=e.target.closest('.mk');
+  if(mk){ selectClockHour(+mk.dataset.i); return; }
+  if(e.target.closest('#clockCenter')){
+    const h=state.data[state.clockSel];
+    const t=state.clockSel===0?'Nu':hh(h.t)+':00';
+    openDetail(h, t, capF(h.t.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'short'})));
+  }
+});
+$('#clockToggle').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
+  state.clockOffset=+b.dataset.o; state.clockSel=state.clockOffset;
+  $$('#clockToggle button').forEach(x=>x.classList.toggle('on',x===b)); renderClock(); });
+$('#storyBtn').addEventListener('click', openStory);
+$('#periodList').addEventListener('click', e=>{ const b=e.target.closest('.prow'); if(!b) return;
+  const w=state.periods[+b.dataset.i]; if(!w) return;
+  const obj={ t:w.start, temp:w.hi, feels:w.feels, precip:w.precip, pop:w.pop, uv:w.uv, cloud:w.cloud, hum:w.hum, wind:w.wind, wdir:w.wdir, emoji:w.emoji, desc:w.desc };
+  const sub=`${w.tomorrow?'Imorgon':'Idag'} kl ${String(w.a).padStart(2,'0')}–${String(w.b).padStart(2,'0')}`;
+  openDetail(obj, w.label, sub, periodNarrative(w)); });
+window.addEventListener('resize', ()=>{ if(state.data) renderClock(); });
+$('#weekList').addEventListener('click', e=>{ const b=e.target.closest('.drow'); if(!b) return;
+  const i=+b.dataset.i, d=state.daily[i];
+  const obj={ t:d.date, temp:d.hi, feels:feelsLike(d.hi,d.wind,d.hum), precip:d.precip, pop:d.pop, uv:d.uv, cloud:d.cloud, hum:d.hum, wind:d.wind, wdir:null, emoji:d.emoji, desc:d.desc };
+  const name=i===0?'Idag':capF(d.date.toLocaleDateString('sv-SE',{weekday:'long'}));
+  openDetail(obj, name, d.date.toLocaleDateString('sv-SE',{day:'numeric',month:'long'})+' · dagtid'); });
+$('#popScrim').addEventListener('click', closeDetail);
+$('#aiScope').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
+  state.aiScope=b.dataset.s; $$('#aiScope button').forEach(x=>x.classList.toggle('on',x===b)); renderAI(); });
+$('#aiAud').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
+  setAudience(b.dataset.a); });
+$('#popBody').addEventListener('click', e=>{ const b=e.target.closest('.aud-toggle button'); if(!b) return;
+  setAudience(b.dataset.a); });
+
+/* ---------- Start ---------- */
+(async function init(){
+  if(state.loc){
+    $('#locName').textContent=state.loc.name;
+    $('#locSub').textContent=state.loc.sub||'Tryck för att byta ort';
+    loadWeather();
+  } else if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const g=await reverseGeo(pos.coords.latitude,pos.coords.longitude);
+      setLocation({name:g.name, sub:g.sub||'Din plats (GPS)', lat:pos.coords.latitude, lon:pos.coords.longitude});
+    }, ()=>{ setLocation({name:'Stockholm', sub:'Standardort', lat:59.3293, lon:18.0686}); },
+    {timeout:6000});
+  } else {
+    setLocation({name:'Stockholm', sub:'Standardort', lat:59.3293, lon:18.0686});
+  }
+})();
+
+/* Service worker (PWA, valfritt – tyst om det saknas) */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
