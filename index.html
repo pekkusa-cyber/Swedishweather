@@ -260,30 +260,66 @@ button{font-family:inherit; border:0; background:none; color:inherit; cursor:poi
 .narrative-pop{font-size:14px; line-height:1.6; color:var(--ink)}
 .narrative-pop b{color:var(--cool-ink)}
 
+/* ===== STAPEL-STRIP (Hem) ===== */
+.strip-legend{display:flex; gap:14px; align-items:center; font-size:10.5px; color:var(--ink3); font-weight:700; padding:2px 2px 4px}
+.strip-legend .hint{margin-left:auto; color:var(--ink3)}
+.barstrip{flex:1 1 auto; min-height:0; display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:4px 2px 8px; align-items:stretch}
+.barstrip::-webkit-scrollbar{display:none}
+.bcol{flex:0 0 auto; width:60px; display:flex; flex-direction:column; align-items:center; gap:4px;
+  background:linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.55)); border:1px solid rgba(255,255,255,.7);
+  border-radius:19px; padding:10px 5px 9px; box-shadow:0 6px 16px rgba(30,60,110,.10); backdrop-filter:blur(8px)}
+.bcol:active{transform:scale(.96)}
+.bcol.first{border-color:rgba(62,142,240,.45); box-shadow:0 8px 20px rgba(62,142,240,.20)}
+.bcol .bt{font-size:11.5px; font-weight:800; color:var(--ink2); font-variant-numeric:tabular-nums}
+.bcol .bi{font-size:22px; line-height:1}
+.bcol .btemp{font-size:14.5px; font-weight:800; font-variant-numeric:tabular-nums}
+.bcol .chart{position:relative; width:100%; flex:1 1 auto; min-height:64px; margin:1px 0}
+.bcol .base{position:absolute; left:8px; right:8px; height:2px; background:rgba(19,33,50,.09); border-radius:2px}
+.bcol .up{position:absolute; left:50%; transform:translateX(-50%); width:18px; border-radius:8px 8px 4px 4px; box-shadow:0 3px 8px rgba(210,140,40,.22)}
+.bcol .up::after{content:""; position:absolute; inset:0 0 auto 0; height:38%; border-radius:8px 8px 0 0; background:linear-gradient(180deg,rgba(255,255,255,.55),transparent)}
+.bcol .down{position:absolute; left:50%; transform:translateX(-50%); width:18px; border-radius:4px 4px 8px 8px; box-shadow:0 3px 8px rgba(50,120,200,.18)}
+.bcol .bpop{font-size:10px; font-weight:800; color:var(--cool-ink); font-variant-numeric:tabular-nums}
+.bcol .bpop.dry{color:var(--ink3)}
+.bcol .bcl{font-size:19px; line-height:1; margin-top:1px}
+
+/* ===== DAGENS PROGNOS – två 50/50-rutor ===== */
+.split{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:10px; padding-top:2px}
+.split-box{flex:1 1 0; min-height:0; background:var(--card); border-radius:var(--r); padding:12px 14px; box-shadow:var(--shadow); backdrop-filter:blur(12px); display:flex; flex-direction:column; overflow:hidden}
+.box-label{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink3); font-weight:800; margin-bottom:8px; flex:0 0 auto}
+.split-box .periods{flex:1 1 auto; min-height:0; gap:7px}
+.split-box .narrative{flex:1 1 auto; min-height:0; overflow:auto; font-size:13.5px; line-height:1.55; color:var(--ink); -webkit-overflow-scrolling:touch}
+.split-box .narrative b{color:var(--cool-ink)}
+
 /* ===== DETALJ-POPUP (tim/dag) ===== */
 .pop-scrim{position:fixed; inset:0; background:rgba(15,30,55,.4); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:.2s; z-index:70}
 .pop-scrim.show{opacity:1; pointer-events:auto}
-.popcard{position:fixed; left:50%; top:50%; transform:translate(-50%,-46%) scale(.96); width:min(90vw,380px); max-height:86vh; overflow:auto;
-  background:linear-gradient(180deg,#fff,#f6faff); border-radius:24px; padding:18px 18px 20px; box-shadow:0 24px 60px rgba(20,40,80,.3); z-index:80; opacity:0; pointer-events:none; transition:.24s cubic-bezier(.2,.8,.2,1)}
+.popcard{position:fixed; left:50%; top:50%; transform:translate(-50%,-46%) scale(.96); width:min(92vw,390px); max-height:90vh; overflow:hidden;
+  background:linear-gradient(180deg,#fff,#f6faff); border-radius:24px; padding:16px 16px 18px; box-shadow:0 24px 60px rgba(20,40,80,.3); z-index:80; opacity:0; pointer-events:none; transition:.24s cubic-bezier(.2,.8,.2,1)}
 .popcard.show{opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1)}
-.pop-head{display:flex; align-items:center; gap:10px; margin-bottom:12px}
-.pop-head .pt{font-size:17px; font-weight:800}
+.pop-head{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+.pop-head .pt{font-size:16px; font-weight:800}
 .pop-head .pt small{display:block; font-size:11px; color:var(--ink3); font-weight:600}
-.pop-close{margin-left:auto; width:32px; height:32px; border-radius:50%; background:rgba(19,33,50,.06); font-size:16px; color:var(--ink2)}
-.pop-hero{display:flex; align-items:center; gap:14px; margin-bottom:14px}
-.pop-hero .pe{font-size:46px}
-.pop-hero .ptemp{font-size:40px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
+.pop-close{margin-left:auto; width:30px; height:30px; border-radius:50%; background:rgba(19,33,50,.06); font-size:15px; color:var(--ink2); flex:0 0 auto}
+.pop-hero{display:flex; align-items:center; gap:13px; margin-bottom:11px}
+.pop-hero .pe{font-size:40px}
+.pop-hero .ptemp{font-size:34px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
 .pop-hero .pd{font-size:13px; color:var(--ink2); font-weight:700}
 .pop-hero .pf{font-size:12px; color:var(--ink3); font-weight:600}
-.pop-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px}
-.pop-grid .pg{background:rgba(62,142,240,.07); border-radius:12px; padding:9px 6px; text-align:center}
-.pop-grid .pg .pv{font-weight:800; font-size:15px; font-variant-numeric:tabular-nums}
-.pop-grid .pg .pl{font-size:10px; color:var(--ink2); font-weight:700; margin-top:2px}
-.pop-cloth h5{margin:0 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink3)}
-.pop-cloth .band{display:flex; align-items:center; gap:8px; font-weight:800; font-size:14px; margin-bottom:8px}
+.pop-note{font-size:12px; line-height:1.4; color:var(--ink2); background:rgba(62,142,240,.07); border-radius:12px; padding:9px 11px; margin-bottom:10px;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+.pop-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:11px}
+.pop-grid .pg{background:rgba(62,142,240,.07); border-radius:12px; padding:8px 5px; text-align:center}
+.pop-grid .pg .pv{font-weight:800; font-size:14px; font-variant-numeric:tabular-nums}
+.pop-grid .pg .pl{font-size:9.5px; color:var(--ink2); font-weight:700; margin-top:2px}
+.pop-cloth h5{margin:0; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink3)}
+.pop-cloth .band{display:flex; align-items:center; gap:8px; font-weight:800; font-size:14px; margin:8px 0}
 .pop-cloth .pchips{display:flex; flex-wrap:wrap; gap:6px}
-.pop-cloth .pchip{background:rgba(255,154,61,.13); color:var(--warm-ink); font-weight:700; font-size:12px; padding:6px 9px; border-radius:10px}
-.pop-cloth .preason{margin-top:10px; font-size:12px; color:var(--ink2); line-height:1.45}
+.pop-cloth .pchip{display:inline-flex; align-items:center; gap:5px; background:rgba(255,154,61,.13); color:var(--warm-ink); font-weight:700; font-size:12px; padding:6px 9px; border-radius:10px}
+.pop-cloth .preason{margin-top:9px; font-size:12px; color:var(--ink2); line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.pc-head{display:flex; align-items:center; gap:8px; margin-bottom:2px}
+.pop-cloth .aud-toggle{margin-left:auto}
+.pop-cloth .aud-toggle button{font-size:11px; padding:5px 9px}
 .pc-head{display:flex; align-items:center; gap:8px; margin-bottom:9px}
 .pc-head h5{margin:0}
 .pop-cloth .aud-toggle{margin-left:auto}
@@ -373,27 +409,22 @@ button{font-family:inherit; border:0; background:none; color:inherit; cursor:poi
         </div>
       </div>
       <div class="metrics" id="nowMetrics"></div>
-      <div class="sec-label">Dygnet framåt · tryck för detaljer & klädråd</div>
-      <div class="periods" id="periodList"></div>
+      <div class="sec-label">Kommande timmar · tryck en stapel för detaljer</div>
+      <div class="barstrip" id="barStrip"></div>
     </section>
 
-    <!-- 24H -->
+    <!-- DAGENS PROGNOS -->
     <section class="view" id="view-hourly">
-      <div class="vhead"><h2>Timme för timme</h2>
-        <div class="clock-toggle" id="clockToggle" style="margin-left:auto">
-          <button data-o="0" class="on">0–12h</button>
-          <button data-o="12">12–24h</button>
+      <div class="vhead"><h2>Dagens prognos</h2></div>
+      <div class="split">
+        <div class="split-box">
+          <div class="box-label">Dagen i perioder · tryck för detaljer</div>
+          <div class="periods" id="periodList"></div>
         </div>
-      </div>
-      <div class="clock-wrap">
-        <div class="clock" id="clock">
-          <div class="clock-bg"></div>
-          <div class="clock-dial" id="clockDial"></div>
+        <div class="split-box">
+          <div class="box-label">📖 Sammanfattning</div>
+          <div class="narrative" id="dayStory"></div>
         </div>
-      </div>
-      <div class="clock-bottom">
-        <div class="range-band" id="rangeBand"></div>
-        <button class="story-btn" id="storyBtn">📖 Dagens prognos ›</button>
       </div>
     </section>
 
@@ -442,14 +473,14 @@ button{font-family:inherit; border:0; background:none; color:inherit; cursor:poi
         <b>Så kombineras data:</b> Appen hämtar från SMHI (snow1gv1) och MET Norway parallellt och visar
         <b>snittet</b> av det båda ger. Saknar en leverantör ett värde – t.ex. UV‑index – lånas det automatiskt
         i bakgrunden från den andra, eller uppskattas från solhöjd och molntäcke så att inget fält blir tomt.
-        <span style="display:block;margin-top:8px;color:var(--ink3);font-weight:700">Version v7</span>
+        <span style="display:block;margin-top:8px;color:var(--ink3);font-weight:700">Version v9</span>
       </div>
     </section>
   </div>
 
   <nav class="nav" id="nav">
     <button data-v="now" class="on"><span class="ni">🌤️</span><span class="nl">Idag</span></button>
-    <button data-v="hourly"><span class="ni">🕐</span><span class="nl">24h</span></button>
+    <button data-v="hourly"><span class="ni">📋</span><span class="nl">Prognos</span></button>
     <button data-v="week"><span class="ni">📅</span><span class="nl">7 dagar</span></button>
     <button data-v="ai"><span class="ni">👕</span><span class="nl">Klädval</span></button>
     <button data-v="status"><span class="ni">📡</span><span class="nl">Status</span></button>
@@ -468,7 +499,7 @@ button{font-family:inherit; border:0; background:none; color:inherit; cursor:poi
   <div class="results" id="searchResults"></div>
   <div class="fav-label">Favoriter (max 5)</div>
   <div id="favList"></div>
-  <div class="ver">Väderråd · v7</div>
+  <div class="ver">Väderråd · v9</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -499,6 +530,7 @@ const state = {
   clockSel: 0,        // vald timme (absolut index i data)
   popup: null,        // {h,title,sub,note} för öppen detalj-popup
   periods: [],        // dygnets perioder (Idag-fliken)
+  forecast: [],       // kommande timmar (24h-fliken)
   data: null,                        // combined hourly [{t, temp, feels, hum, cloud, precip, uv, wind, symbol, src:{}}]
   daily: null,
   status: { smhi:{state:'wait'}, yr:{state:'wait'} }
@@ -835,8 +867,6 @@ function renderNow(){
   ];
   $('#nowMetrics').innerHTML = M.map(m=>`
     <div class="metric"><div class="mi">${m[0]}</div><div class="mv">${m[2]}</div><div class="ml">${m[1]}</div></div>`).join('');
-
-  renderPeriods();
 }
 
 /* ---------- Dygnets perioder ---------- */
@@ -1001,6 +1031,7 @@ function openDetail(h, title, sub, note){
 function renderPopup(){
   const {h,title,sub,note}=state.popup;
   const {band, extras}=outfit(h.feels, h.precip, h.uv, h.wind, state.aiAud);
+  const chips=[...band.base, ...extras].slice(0,6).map(c=>`<span class="pchip">${c[0]} ${c[1]}</span>`).join('');
   $('#popBody').innerHTML=`
     <div class="pop-head"><div class="pt">${title}<small>${sub||''}</small></div><button class="pop-close" id="popClose">✕</button></div>
     <div class="pop-hero"><div class="pe">${h.emoji}</div>
@@ -1010,28 +1041,61 @@ function renderPopup(){
     <div class="pop-cloth">
       <div class="pc-head"><h5>Klädråd</h5>${audToggleHTML()}</div>
       <div class="band">${band.emoji} ${band.title}</div>
-      <div class="layers-grid">${clothLayersHTML(band, extras)}</div>
-      <div class="ai-reason">${buildReason(h, state.aiAud)}</div>
+      <div class="pchips">${chips}</div>
+      <div class="preason">${buildReason(h, state.aiAud)}</div>
     </div>`;
   $('#popClose').onclick=closeDetail;
 }
 function closeDetail(){ $('#popScrim').classList.remove('show'); $('#popCard').classList.remove('show'); }
 
-function renderHourly(){
-  renderClock();
+function forecastHours(){
+  const now=new Date();
+  const nb=new Date(now); nb.setSeconds(0,0);
+  if(nb.getMinutes()>0){ nb.setMinutes(0); nb.setHours(nb.getHours()+1); } else { nb.setMinutes(0); }
+  const fc=state.data.filter(h=>h.t>=nb);
+  return fc.length?fc:state.data;
 }
-function openStory(){
-  $('#popBody').innerHTML=`
-    <div class="pop-head"><div class="pt">Dagens prognos<small>Närmaste dygnet</small></div><button class="pop-close" id="popClose">✕</button></div>
-    <div class="narrative-pop">${dayNarrative()}</div>`;
-  $('#popClose').onclick=closeDetail;
-  $('#popScrim').classList.add('show'); $('#popCard').classList.add('show');
+function lighten(hex,a){ return hex + a; }   // hex + alpha-hex suffix
+function renderBars(){
+  const fc=forecastHours().slice(0,24);
+  state.forecast=fc;
+  if(!fc.length){ $('#barStrip').innerHTML=''; return; }
+  const temps=fc.map(h=>h.temp);
+  const tmin=Math.min(...temps), tmax=Math.max(...temps), tr=Math.max(1,tmax-tmin);
+  const maxP=Math.max(0.4, ...fc.map(h=>h.precip||0));
+  $('#barStrip').innerHTML = fc.map((h,i)=>{
+    const tn=(h.temp-tmin)/tr;
+    const upH=(14 + tn*48).toFixed(1);
+    const rn=(h.precip||0)/maxP;
+    const dnH=h.precip>0 ? (12 + rn*24).toFixed(1) : 0;
+    const c=tempColor(h.temp);
+    const upBg=`linear-gradient(180deg, ${lighten(c,'ff')}, ${lighten(c,'aa')})`;
+    const bA=(0.5+0.45*rn).toFixed(2), bA2=(0.75+0.25*rn).toFixed(2);
+    const dnBg=`linear-gradient(180deg, rgba(74,160,224,${bA}), rgba(40,110,190,${bA2}))`;
+    const dry=h.pop<20;
+    return `<button class="bcol${i===0?' first':''}" data-i="${i}">
+      <div class="bt">${i===0?hh(h.t):hh(h.t)}</div>
+      <div class="bi">${h.emoji}</div>
+      <div class="btemp" style="color:${c}">${fmt(h.temp)}°</div>
+      <div class="chart">
+        <div class="up" style="bottom:38%; height:${upH}%; background:${upBg}"></div>
+        <div class="base" style="top:62%"></div>
+        ${h.precip>0?`<div class="down" style="top:62%; height:${dnH}%; background:${dnBg}"></div>`:''}
+      </div>
+      <div class="bpop ${dry?'dry':''}">💧${h.pop}%</div>
+      <div class="bcl">${clothSym(h.feels,h.precip)}</div>
+    </button>`;
+  }).join('');
+  const sb=$('#barStrip'); if(sb) sb.scrollLeft=0;
+}
+function renderStory(){
+  const el=$('#dayStory'); if(el) el.innerHTML = dayNarrative();
 }
 
 /* ---------- Berättande prognos ---------- */
 function fmtRange(a,b){ return `${hh(a)}–${hh(b)}`; }
 function dayNarrative(){
-  const hrs=state.data.slice(0,24);
+  const hrs=(state.forecast&&state.forecast.length?state.forecast:state.data).slice(0,24);
   if(hrs.length<4) return '';
   const temps=hrs.map(h=>h.temp);
   const maxT=Math.max(...temps), minT=Math.min(...temps);
@@ -1144,7 +1208,7 @@ function buildReason(h, aud, scope){
 }
 
 function renderAll(){
-  renderNow(); renderHourly(); renderWeek(); renderAI();
+  renderNow(); renderBars(); renderPeriods(); renderStory(); renderWeek(); renderAI();
 }
 
 /* =========================================================
@@ -1209,7 +1273,6 @@ async function loadWeather(){
   updateTheme(state.data[0]);
   renderAll();
   $('#loading').classList.remove('show');
-  requestAnimationFrame(sizeClock);
 }
 
 function updateTheme(now){
@@ -1295,7 +1358,6 @@ function switchView(v){
   $$('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
   if(v==='ai') renderAI();
   if(v==='status') renderStatus();
-  if(v==='hourly'){ requestAnimationFrame(()=>{ sizeClock(); }); }
 }
 $('#nav').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) switchView(b.dataset.v); });
 $('#locBtn').addEventListener('click', openSheet);
@@ -1318,25 +1380,16 @@ $('#favList').addEventListener('click', e=>{
   const fav=state.favs[+f.dataset.i]; setLocation(fav); closeSheet();
 });
 const capF = s => s.charAt(0).toUpperCase()+s.slice(1);
-$('#clock').addEventListener('click', e=>{
-  const mk=e.target.closest('.mk');
-  if(mk){ selectClockHour(+mk.dataset.i); return; }
-  if(e.target.closest('#clockCenter')){
-    const h=state.data[state.clockSel];
-    const t=state.clockSel===0?'Nu':hh(h.t)+':00';
-    openDetail(h, t, capF(h.t.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'short'})));
-  }
-});
-$('#clockToggle').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
-  state.clockOffset=+b.dataset.o; state.clockSel=state.clockOffset;
-  $$('#clockToggle button').forEach(x=>x.classList.toggle('on',x===b)); renderClock(); });
-$('#storyBtn').addEventListener('click', openStory);
+$('#barStrip').addEventListener('click', e=>{ const b=e.target.closest('.bcol'); if(!b) return;
+  const i=+b.dataset.i, h=(state.forecast||[])[i]; if(!h) return;
+  openDetail(h, hh(h.t)+':00', capF(h.t.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'short'}))); });
+window.addEventListener('resize', ()=>{});
 $('#periodList').addEventListener('click', e=>{ const b=e.target.closest('.prow'); if(!b) return;
   const w=state.periods[+b.dataset.i]; if(!w) return;
   const obj={ t:w.start, temp:w.hi, feels:w.feels, precip:w.precip, pop:w.pop, uv:w.uv, cloud:w.cloud, hum:w.hum, wind:w.wind, wdir:w.wdir, emoji:w.emoji, desc:w.desc };
   const sub=`${w.tomorrow?'Imorgon':'Idag'} kl ${String(w.a).padStart(2,'0')}–${String(w.b).padStart(2,'0')}`;
   openDetail(obj, w.label, sub, periodNarrative(w)); });
-window.addEventListener('resize', ()=>{ if(state.data) renderClock(); });
+window.addEventListener('resize', ()=>{ if(state.data && state.data.length) renderBars(); });
 $('#weekList').addEventListener('click', e=>{ const b=e.target.closest('.drow'); if(!b) return;
   const i=+b.dataset.i, d=state.daily[i];
   const obj={ t:d.date, temp:d.hi, feels:feelsLike(d.hi,d.wind,d.hum), precip:d.precip, pop:d.pop, uv:d.uv, cloud:d.cloud, hum:d.hum, wind:d.wind, wdir:null, emoji:d.emoji, desc:d.desc };
